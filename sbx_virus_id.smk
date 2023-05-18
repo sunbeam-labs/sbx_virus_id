@@ -83,13 +83,16 @@ rule install_cenote_taker2:
             echo "Cenote-Taker2 directory already exists"
         fi
 
-        cd Cenote-Taker2
-        conda env create --file cenote-taker2_env.yml
+        if { conda env list | grep 'RUN_ENV'; } >/dev/null 2>&1; then
+            echo "Cenote-Taker2 env already exists"
+        else
+            conda create --name cenote-taker2_env --file cenote_taker2_env_explicit.txt
+        fi
         conda activate cenote-taker2_env
         pip install phanotate
-        conda install -c conda-forge -c bioconda hhsuite last=1282
 
         # with all the options (75GB). The PDB database (--hhPDB) takes about 2 hours to download.
+        cd Cenote-Taker2/
         python update_ct2_databases.py --hmm True --protein True --rps True --taxdump True --hhCDD True --hhPFAM True --hhPDB True
 
         touch {output}
