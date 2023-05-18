@@ -88,7 +88,11 @@ rule install_cenote_taker2:
         else
             conda create --name cenote-taker2_env --file cenote_taker2_env_explicit.txt
         fi
+
+        CONDA_BASE=$(conda info --base)
+        source $CONDA_BASE/etc/profile.d/conda.sh
         conda activate cenote-taker2_env
+
         pip install phanotate
 
         # with all the options (75GB). The PDB database (--hhPDB) takes about 2 hours to download.
