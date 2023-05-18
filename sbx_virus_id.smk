@@ -83,7 +83,7 @@ rule install_cenote_taker2:
             echo "Cenote-Taker2 directory already exists"
         fi
 
-        if { conda env list | grep 'RUN_ENV'; } >/dev/null 2>&1; then
+        if {{ conda env list | grep 'cenote-taker2_env'; }} >/dev/null 2>&1; then
             echo "Cenote-Taker2 env already exists"
         else
             conda create --name cenote-taker2_env --file cenote_taker2_env_explicit.txt
