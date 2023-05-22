@@ -74,6 +74,8 @@ rule install_cenote_taker2:
         VIRUS_FP / "cenote_taker2" / ".installed"
     params:
         loc=str(get_ext_path())
+    resources:
+        runtime=240
     shell:
         """
         cd {params.loc}
