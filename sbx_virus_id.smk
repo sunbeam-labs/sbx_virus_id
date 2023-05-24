@@ -72,10 +72,14 @@ rule virus_id_megahit_paired:
 rule install_cenote_taker2:
     output:
         VIRUS_FP / "cenote_taker2" / ".installed"
+    benchmark:
+        BENCHMARK_FP / "install_cenote_taker2.tsv"
+    log:
+        LOG_FP / "install_cenote_taker2.log",
     params:
         loc=str(get_ext_path())
     resources:
-        runtime=240
+        runtime=2400
     shell:
         """
         cd {params.loc}
@@ -99,7 +103,7 @@ rule install_cenote_taker2:
 
         # with all the options (75GB). The PDB database (--hhPDB) takes about 2 hours to download.
         cd Cenote-Taker2/
-        python update_ct2_databases.py --hmm True --protein True --rps True --taxdump True --hhCDD True --hhPFAM True --hhPDB True
+        python update_ct2_databases.py --hmm True --protein True --rps True --taxdump True --hhCDD True --hhPFAM True --hhPDB True >> {log}
 
         touch {output}
         """
@@ -111,5 +115,9 @@ rule cenote_taker2:
         install=VIRUS_FP / "cenote_taker2" / ".installed",
     output:
         VIRUS_FP / "hisss" / "all_virus.txt"
+    benchmark:
+        BENCHMARK_FP / "cenote_taker2.tsv"
+    log:
+        LOG_FP / "cenote_taker2.log",
     shell:
-        "python /path/to/run_cenote-taker2.py -c /path/to/contigs -r output_directory -m 32 -t 32 -p true -db virion"
+        "python /path/to/run_cenote-taker2.py -c /path/to/contigs -r output_directory -m 32 -t 32 -p true -db virion 2>&1 | tee {log}"
