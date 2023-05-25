@@ -120,9 +120,9 @@ rule cenote_taker2:
     output:
         VIRUS_FP / "cenote_taker2" / "final_combined_virus_sequences_{sample}.fasta",
     benchmark:
-        BENCHMARK_FP / "cenote_taker2.tsv"
+        BENCHMARK_FP / "cenote_taker2_{sample}.tsv"
     log:
-        LOG_FP / "cenote_taker2.log",
+        LOG_FP / "cenote_taker2_{sample}.log",
     params:
         run_script=str(get_ext_path() / "Cenote-Taker2" / "run_cenote-taker2.py"),
         out_dir=str(VIRUS_FP / "cenote_taker2"),
