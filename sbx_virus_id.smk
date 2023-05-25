@@ -3,7 +3,7 @@
 # Rules for running Cenote-Taker2 and other tools in the viral id pipeline
 
 VIRUS_FP = Cfg["all"]["output_fp"] / "virus"
-TARGET_VIRUS_ID = [VIRUS_FP / "hisss" / "all_virus.txt"]
+TARGET_VIRUS_ID = [VIRUS_FP / "phmmer" / sample for sample in Samples.keys()]
 
 
 try:
@@ -28,6 +28,7 @@ def get_ext_path() -> Path:
 rule all_virus_id:
     input:
         TARGET_VIRUS_ID,
+
 
 rule virus_id_megahit_paired:
     input:
@@ -71,15 +72,15 @@ rule virus_id_megahit_paired:
 
 rule install_cenote_taker2:
     output:
-        VIRUS_FP / "cenote_taker2" / ".installed"
+        VIRUS_FP / "cenote_taker2" / ".installed",
     benchmark:
         BENCHMARK_FP / "install_cenote_taker2.tsv"
     log:
         LOG_FP / "install_cenote_taker2.log",
     params:
-        loc=str(get_ext_path())
+        loc=str(get_ext_path()),
     resources:
-        runtime=2400
+        runtime=2400,
     shell:
         """
         cd {params.loc}
@@ -111,20 +112,24 @@ rule install_cenote_taker2:
 
 rule cenote_taker2:
     input:
-        contigs=expand(ASSEMBLY_FP / "virus_id_megahit" / "{sample}_asm" / "final.contigs.fa", sample=Samples.keys()),
+        contigs=expand(
+            ASSEMBLY_FP / "virus_id_megahit" / "{sample}_asm" / "final.contigs.fa",
+            sample=Samples.keys(),
+        ),
         install=VIRUS_FP / "cenote_taker2" / ".installed",
     output:
-        VIRUS_FP / "cenote_taker2" / "final_combined_virus_sequences_{sample}.fasta"
+        VIRUS_FP / "cenote_taker2" / "final_combined_virus_sequences_{sample}.fasta",
     benchmark:
         BENCHMARK_FP / "cenote_taker2.tsv"
     log:
         LOG_FP / "cenote_taker2.log",
     params:
-        run_script=str(get_ext_path() / "Cenote-Taker2" / "run_cenote-taker2.py")
-        out_dir=str(VIRUS_FP / "cenote_taker2")
+        run_script=str(get_ext_path() / "Cenote-Taker2" / "run_cenote-taker2.py"),
+        out_dir=str(VIRUS_FP / "cenote_taker2"),
     shell:
         "python {params.run_script} -c {input.contigs} -r {params.out_dir} -m 32 -t 32 -p true -db virion 2>&1 | tee {log}"
-    
+
+
 rule build_virus_diamond_db:
     """Use diamond makedb to create any necessary db indeces that don't exist."""
     input:
@@ -142,10 +147,13 @@ rule build_virus_diamond_db:
         diamond makedb --in {input} -d {input} 2>&1 | tee {log}
         """
 
+
 rule virus_blastx:
     """Run diamond blastx on untranslated genes against a target db and write to blast tabular format."""
     input:
-        genes=VIRUS_FP / "cenote_taker2" / "final_combined_virus_sequences_{sample}.fasta",
+        genes=VIRUS_FP
+        / "cenote_taker2"
+        / "final_combined_virus_sequences_{sample}.fasta",
         indexes=rules.build_virus_diamond_db.output,
     output:
         VIRUS_FP / "blastx" / "{sample}.btf",
@@ -173,11 +181,12 @@ rule virus_blastx:
             touch {output}
         fi
         """
-    
+
+
 rule phmmer:
     input:
-        VIRUS_FP / "blastx" / "{sample}.btf"
+        VIRUS_FP / "blastx" / "{sample}.btf",
     output:
-        VIRUS_FP / "phmmer" / "{sample}"
+        VIRUS_FP / "phmmer" / "{sample}",
     shell:
         "phmmer -h"
