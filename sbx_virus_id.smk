@@ -114,10 +114,70 @@ rule cenote_taker2:
         contigs=expand(ASSEMBLY_FP / "virus_id_megahit" / "{sample}_asm" / "final.contigs.fa", sample=Samples.keys()),
         install=VIRUS_FP / "cenote_taker2" / ".installed",
     output:
-        VIRUS_FP / "hisss" / "all_virus.txt"
+        VIRUS_FP / "cenote_taker2" / "final_combined_virus_sequences_{sample}.fasta"
     benchmark:
         BENCHMARK_FP / "cenote_taker2.tsv"
     log:
         LOG_FP / "cenote_taker2.log",
+    params:
+        run_script=str(get_ext_path() / "Cenote-Taker2" / "run_cenote-taker2.py")
+        out_dir=str(VIRUS_FP / "cenote_taker2")
     shell:
-        "python /path/to/run_cenote-taker2.py -c /path/to/contigs -r output_directory -m 32 -t 32 -p true -db virion 2>&1 | tee {log}"
+        "python {params.run_script} -c {input.contigs} -r {params.out_dir} -m 32 -t 32 -p true -db virion 2>&1 | tee {log}"
+    
+rule build_virus_diamond_db:
+    """Use diamond makedb to create any necessary db indeces that don't exist."""
+    input:
+        Cfg["sbx_virus_id"]["blast_db"],
+    output:
+        Cfg["sbx_virus_id"]["blast_db"] + ".dmnd",
+    benchmark:
+        BENCHMARK_FP / "build_virus_diamond_db.tsv"
+    log:
+        LOG_FP / "build_virus_diamond_db.log",
+    conda:
+        "sbx_virus_id.yml"
+    shell:
+        """
+        diamond makedb --in {input} -d {input} 2>&1 | tee {log}
+        """
+
+rule virus_blastx:
+    """Run diamond blastx on untranslated genes against a target db and write to blast tabular format."""
+    input:
+        genes=VIRUS_FP / "cenote_taker2" / "final_combined_virus_sequences_{sample}.fasta",
+        indexes=rules.build_virus_diamond_db.output,
+    output:
+        VIRUS_FP / "blastx" / "{sample}.btf",
+    benchmark:
+        BENCHMARK_FP / "run_virus_blastx_{sample}.tsv"
+    log:
+        LOG_FP / "run_virus_blastx_{sample}.log",
+    threads: Cfg["sbx_virus_id"]["blastx_threads"]
+    conda:
+        "sbx_virus_id.yml"
+    shell:
+        """
+        if [ -s {input.genes} ]; then
+            diamond blastx \
+            -q {input.genes} \
+            --db {input.indexes} \
+            --outfmt 6 \
+            --threads {threads} \
+            --evalue 1e-10 \
+            --max-target-seqs 2475 \
+            --out {output} \
+            2>&1 | tee {log}
+        else
+            echo "Caught empty query" >> {log}
+            touch {output}
+        fi
+        """
+    
+rule phmmer:
+    input:
+        VIRUS_FP / "blastx" / "{sample}.btf"
+    output:
+        VIRUS_FP / "phmmer" / "{sample}"
+    shell:
+        "phmmer -h"

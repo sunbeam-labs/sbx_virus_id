@@ -1,0 +1,3 @@
+sbx_virus_id:
+  blast_db: ''
+  blastx_threads: 4
