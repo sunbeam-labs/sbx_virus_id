@@ -4,4 +4,3 @@ channels:
 dependencies:
   - blast
   - diamond
-  - hmmer

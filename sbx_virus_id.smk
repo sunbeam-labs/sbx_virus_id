@@ -45,6 +45,9 @@ rule virus_id_megahit_paired:
     threads: 4
     conda:
         "megahit_env.yml"
+    resources:
+        mem_mb=20000,
+        runtime=720,
     shell:
         """
         ## turn off bash strict mode
@@ -182,11 +185,20 @@ rule virus_blastx:
         fi
         """
 
-
-rule phmmer:
+    
+rule hisss:
     input:
-        VIRUS_FP / "blastx" / "{sample}.btf",
+        VIRUS_FP / "blastx" / "{sample}.btf"
     output:
-        VIRUS_FP / "phmmer" / "{sample}",
+        VIRUS_FP / "hisss" / "summary" / "all_plot_summary.txt",
+        VIRUS_FP / "hisss" / "summary" / "all_align_summary.txt",
+    benchmark:
+        BENCHMARK_FP / "hisss.tsv"
+    log:
+        LOG_FP / "hisss.log",
+    conda:
+        "hisss_env.yml"
     shell:
-        "phmmer -h"
+        """
+        echo "HEY"
+        """
