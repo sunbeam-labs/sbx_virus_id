@@ -188,7 +188,7 @@ rule virus_blastx:
     
 rule hisss:
     input:
-        VIRUS_FP / "blastx" / "{sample}.btf"
+        expand(VIRUS_FP / "blastx" / "{sample}.btf", sample=Samples.keys())
     output:
         VIRUS_FP / "hisss" / "summary" / "all_plot_summary.txt",
         VIRUS_FP / "hisss" / "summary" / "all_align_summary.txt",
