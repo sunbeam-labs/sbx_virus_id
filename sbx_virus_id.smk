@@ -3,7 +3,7 @@
 # Rules for running Cenote-Taker2 and other tools in the viral id pipeline
 
 VIRUS_FP = Cfg["all"]["output_fp"] / "virus"
-TARGET_VIRUS_ID = [VIRUS_FP / "phmmer" / sample for sample in Samples.keys()]
+TARGET_VIRUS_ID = [VIRUS_FP / "hisss" / "summary" / "all_plot_summary.txt", VIRUS_FP / "hisss" / "summary" / "all_align_summary.txt"]
 
 
 try:
