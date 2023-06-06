@@ -133,6 +133,14 @@ rule cenote_taker2:
         "python {params.run_script} -c {input.contigs} -r {params.out_dir} -m 32 -t 32 -p true -db virion 2>&1 | tee {log}"
 
 
+# Install blast db:
+# conda create -n blast
+# conda activate blast
+# conda install -c bioconda blast
+# mkdir refseq_select_prot/
+# cd refseq_select_prot/
+# perl `which update_blastdb.pl` --decompress refseq_select_prot
+
 rule build_virus_diamond_db:
     """Use diamond makedb to create any necessary db indeces that don't exist."""
     input:
