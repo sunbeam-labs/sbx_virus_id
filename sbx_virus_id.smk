@@ -146,7 +146,7 @@ rule build_virus_diamond_db:
     input:
         Cfg["sbx_virus_id"]["blast_db"],
     output:
-        Cfg["sbx_virus_id"]["blast_db"] + ".dmnd",
+        VIRUS_FP / "diamond" / ".prep",
     benchmark:
         BENCHMARK_FP / "build_virus_diamond_db.tsv"
     log:
@@ -155,7 +155,7 @@ rule build_virus_diamond_db:
         "sbx_virus_id.yml"
     shell:
         """
-        diamond makedb --in {input} -d {input} 2>&1 | tee {log}
+        diamond prepdb -d {input} 2>&1 | tee {log}
         """
 
 
@@ -165,13 +165,15 @@ rule virus_blastx:
         genes=VIRUS_FP
         / "cenote_taker2"
         / "final_combined_virus_sequences_{sample}.fasta",
-        indexes=rules.build_virus_diamond_db.output,
+        VIRUS_FP / "diamond" / ".prep",
     output:
         VIRUS_FP / "blastx" / "{sample}.btf",
     benchmark:
         BENCHMARK_FP / "run_virus_blastx_{sample}.tsv"
     log:
         LOG_FP / "run_virus_blastx_{sample}.log",
+    params:
+        blastdb=Cfg["sbx_virus_id"]["blast_db"],
     threads: Cfg["sbx_virus_id"]["blastx_threads"]
     conda:
         "sbx_virus_id.yml"
@@ -180,7 +182,7 @@ rule virus_blastx:
         if [ -s {input.genes} ]; then
             diamond blastx \
             -q {input.genes} \
-            --db {input.indexes} \
+            -d {params.blastdb} \
             --outfmt 6 \
             --threads {threads} \
             --evalue 1e-10 \
