@@ -3,7 +3,10 @@
 # Rules for running Cenote-Taker2 and other tools in the viral id pipeline
 
 VIRUS_FP = Cfg["all"]["output_fp"] / "virus"
-TARGET_VIRUS_ID = [VIRUS_FP / "hisss" / "summary" / "all_plot_summary.txt", VIRUS_FP / "hisss" / "summary" / "all_align_summary.txt"]
+TARGET_VIRUS_ID = [
+    VIRUS_FP / "hisss" / "summary" / "all_plot_summary.txt",
+    VIRUS_FP / "hisss" / "summary" / "all_align_summary.txt",
+]
 
 
 try:
@@ -141,22 +144,22 @@ rule cenote_taker2:
 # cd refseq_select_prot/
 # perl `which update_blastdb.pl` --decompress refseq_select_prot
 
-rule build_virus_diamond_db:
-    """Use diamond makedb to create any necessary db indeces that don't exist."""
-    input:
-        Cfg["sbx_virus_id"]["blast_db"],
-    output:
-        VIRUS_FP / "diamond" / ".prep",
-    benchmark:
-        BENCHMARK_FP / "build_virus_diamond_db.tsv"
-    log:
-        LOG_FP / "build_virus_diamond_db.log",
-    conda:
-        "sbx_virus_id.yml"
-    shell:
-        """
-        diamond prepdb -d {input} 2>&1 | tee {log}
-        """
+# rule build_virus_diamond_db:
+#    """Use diamond makedb to create any necessary db indeces that don't exist."""
+#    input:
+#        Cfg["sbx_virus_id"]["blast_db"],
+#    output:
+#        VIRUS_FP / "diamond" / ".prep",
+#    benchmark:
+#        BENCHMARK_FP / "build_virus_diamond_db.tsv"
+#    log:
+#        LOG_FP / "build_virus_diamond_db.log",
+#    conda:
+#        "sbx_virus_id.yml"
+#    shell:
+#        """
+#        diamond prepdb -d {input} 2>&1 | tee {log}
+#        """
 
 
 rule virus_blastx:
@@ -165,7 +168,6 @@ rule virus_blastx:
         genes=VIRUS_FP
         / "cenote_taker2"
         / "final_combined_virus_sequences_{sample}.fasta",
-        VIRUS_FP / "diamond" / ".prep",
     output:
         VIRUS_FP / "blastx" / "{sample}.btf",
     benchmark:
@@ -180,9 +182,9 @@ rule virus_blastx:
     shell:
         """
         if [ -s {input.genes} ]; then
-            diamond blastx \
+            blastx \
             -q {input.genes} \
-            -d {params.blastdb} \
+            --db {params.blastdb} \
             --outfmt 6 \
             --threads {threads} \
             --evalue 1e-10 \
@@ -195,10 +197,10 @@ rule virus_blastx:
         fi
         """
 
-    
+
 rule hisss:
     input:
-        expand(VIRUS_FP / "blastx" / "{sample}.btf", sample=Samples.keys())
+        expand(VIRUS_FP / "blastx" / "{sample}.btf", sample=Samples.keys()),
     output:
         VIRUS_FP / "hisss" / "summary" / "all_plot_summary.txt",
         VIRUS_FP / "hisss" / "summary" / "all_align_summary.txt",
