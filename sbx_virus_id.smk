@@ -195,13 +195,13 @@ rule virus_blastx:
         """
         if [ -s {input.genes} ]; then
             blastx \
-            -q {input.genes} \
-            --db {params.blastdb} \
-            --outfmt 6 \
-            --threads {threads} \
-            --evalue 1e-10 \
-            --max-target-seqs 2475 \
-            --out {output} \
+            -query {input.genes} \
+            -db {params.blastdb} \
+            -outfmt 6 \
+            -num_threads {threads} \
+            -evalue 0.05 \
+            -max_target_seqs 100 \
+            -out {output} \
             2>&1 | tee {log}
         else
             echo "Caught empty query" >> {log}
