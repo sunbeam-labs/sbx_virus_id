@@ -124,7 +124,7 @@ rule cenote_taker2:
         ),
         install=VIRUS_FP / "cenote_taker2" / ".installed",
     output:
-        VIRUS_FP / "cenote_taker2" / "final_combined_virus_sequences_{sample}.fasta",
+        VIRUS_FP / "cenote_taker2" / "{sample}" / "final.contigs.fasta",
     benchmark:
         BENCHMARK_FP / "cenote_taker2_{sample}.tsv"
     log:
@@ -139,6 +139,8 @@ rule cenote_taker2:
         source $CONDA_BASE/etc/profile.d/conda.sh
         conda activate cenote-taker2_env
         cd {params.out_dir}
+        mkdir {params.sample}
+        cd {params.sample}
         python {params.run_script} -c {input.contigs} -r {params.sample} -m 32 -t 32 -p true -db virion 2>&1 | tee {log}
         """
 
@@ -176,7 +178,8 @@ rule virus_blastx:
     input:
         genes=VIRUS_FP
         / "cenote_taker2"
-        / "final_combined_virus_sequences_{sample}.fasta",
+        / "{sample}"
+        / "final.contigs.fasta",
     output:
         VIRUS_FP / "blastx" / "{sample}.btf",
     benchmark:
