@@ -137,8 +137,11 @@ rule cenote_taker2:
         CONDA_BASE=$(conda info --base)
         source $CONDA_BASE/etc/profile.d/conda.sh
         conda activate cenote-taker2_env
-        python {params.run_script} -c {input.contigs} -r {params.out_dir} -m 32 -t 32 -p true -db virion 2>&1 | tee {log}
+        cd {params.outdir}
+        python {params.run_script} -c {input.contigs} -r {wilcards.sample} -m 32 -t 32 -p true -db virion 2>&1 | tee {log}
         """
+
+# Use --cenote-dbs to point to non-standard download path for dbs
 
 
 # Install blast db:
