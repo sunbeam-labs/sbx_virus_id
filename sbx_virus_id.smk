@@ -189,6 +189,9 @@ rule virus_blastx:
     params:
         blastdb=Cfg["sbx_virus_id"]["blast_db"],
     threads: Cfg["sbx_virus_id"]["blastx_threads"]
+    resources:
+        mem_mb=24000,
+        runtime=720,
     conda:
         "sbx_virus_id.yml"
     shell:
