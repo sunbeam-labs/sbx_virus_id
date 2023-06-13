@@ -137,7 +137,7 @@ rule cenote_taker2:
         CONDA_BASE=$(conda info --base)
         source $CONDA_BASE/etc/profile.d/conda.sh
         conda activate cenote-taker2_env
-        cd {params.outdir}
+        cd {params.out_dir}
         python {params.run_script} -c {input.contigs} -r {wilcards.sample} -m 32 -t 32 -p true -db virion 2>&1 | tee {log}
         """
 
