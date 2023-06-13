@@ -139,7 +139,7 @@ rule cenote_taker2:
         source $CONDA_BASE/etc/profile.d/conda.sh
         conda activate cenote-taker2_env
         cd {params.out_dir}
-        mkdir {params.sample}
+        mkdir -p {params.sample}
         cd {params.sample}
         python {params.run_script} -c {input.contigs} -r {params.sample} -m 32 -t 32 -p true -db virion 2>&1 | tee {log}
         """
@@ -189,6 +189,9 @@ rule virus_blastx:
     params:
         blastdb=Cfg["sbx_virus_id"]["blast_db"],
     threads: Cfg["sbx_virus_id"]["blastx_threads"]
+    resources:
+        mem_mb=24000,
+        runtime=720,
     conda:
         "sbx_virus_id.yml"
     shell:
