@@ -133,7 +133,10 @@ rule cenote_taker2:
         run_script=str(get_ext_path() / "Cenote-Taker2" / "run_cenote-taker2.py"),
         out_dir=str(VIRUS_FP / "cenote_taker2"),
     shell:
-        "python {params.run_script} -c {input.contigs} -r {params.out_dir} -m 32 -t 32 -p true -db virion 2>&1 | tee {log}"
+        """
+        conda activate cenote-taker2_env
+        python {params.run_script} -c {input.contigs} -r {params.out_dir} -m 32 -t 32 -p true -db virion 2>&1 | tee {log}
+        """
 
 
 # Install blast db:
