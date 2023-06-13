@@ -132,13 +132,14 @@ rule cenote_taker2:
     params:
         run_script=str(get_ext_path() / "Cenote-Taker2" / "run_cenote-taker2.py"),
         out_dir=str(VIRUS_FP / "cenote_taker2"),
+        sample="{sample}",
     shell:
         """
         CONDA_BASE=$(conda info --base)
         source $CONDA_BASE/etc/profile.d/conda.sh
         conda activate cenote-taker2_env
         cd {params.out_dir}
-        python {params.run_script} -c {input.contigs} -r {wilcards.sample} -m 32 -t 32 -p true -db virion 2>&1 | tee {log}
+        python {params.run_script} -c {input.contigs} -r {params.sample} -m 32 -t 32 -p true -db virion 2>&1 | tee {log}
         """
 
 # Use --cenote-dbs to point to non-standard download path for dbs
