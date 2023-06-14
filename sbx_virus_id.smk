@@ -84,12 +84,13 @@ rule install_cenote_taker2:
     log:
         LOG_FP / "install_cenote_taker2.log",
     params:
-        loc=str(get_ext_path()),
+        ext_fp=str(get_ext_path()),
+        db_fp=Cfg["sbx_virus_id"]["cenote_taker2_db"]
     resources:
         runtime=2400,
     shell:
         """
-        cd {params.loc}
+        cd {params.ext_fp}
         if [ ! -d "Cenote-Taker2" ]; then
             git clone https://github.com/mtisza1/Cenote-Taker2.git
         else
@@ -108,9 +109,17 @@ rule install_cenote_taker2:
 
         pip install phanotate
 
+        # check if all dbs are installed already
+
+
         # with all the options (75GB). The PDB database (--hhPDB) takes about 2 hours to download.
-        cd Cenote-Taker2/
-        python update_ct2_databases.py --hmm True --protein True --rps True --taxdump True --hhCDD True --hhPFAM True --hhPDB True >> {log}
+        if [ -z {params.db_fp} ]; then
+            cd Cenote-Taker2/
+            python update_ct2_databases.py --hmm True --protein True --rps True --taxdump True --hhCDD True --hhPFAM True --hhPDB True >> {log}
+        else
+            cd {params.db_fp}
+            python {params.ext_fp}/Cenote-Taker2/update_ct2_databases.py --hmm True --protein True --rps True --taxdump True --hhCDD True --hhPFAM True --hhPDB True >> {log}
+        fi
 
         touch {output}
         """
@@ -133,6 +142,7 @@ rule cenote_taker2:
         run_script=str(get_ext_path() / "Cenote-Taker2" / "run_cenote-taker2.py"),
         out_dir=str(VIRUS_FP / "cenote_taker2"),
         sample="{sample}",
+        db_fp=Cfg["sbx_virus_id"]["cenote_taker2_db"]
     shell:
         """
         CONDA_BASE=$(conda info --base)
@@ -141,7 +151,7 @@ rule cenote_taker2:
         cd {params.out_dir}
         mkdir -p {params.sample}
         cd {params.sample}
-        python {params.run_script} -c {input.contigs} -r {params.sample} -m 32 -t 32 -p true -db virion 2>&1 | tee {log}
+        python {params.run_script} -c {input.contigs} -r {params.sample} -m 32 -t 32 -p true -db virion --cenote-dbs {params.db_fp} 2>&1 | tee {log}
         """
 
 # Use --cenote-dbs to point to non-standard download path for dbs
