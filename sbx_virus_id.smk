@@ -27,6 +27,12 @@ def get_ext_path() -> Path:
         "Filepath for virus_id not found, are you sure it's installed under extensions/sbx_virus_id?"
     )
 
+def host_decontam_Q() -> str:
+    if Cfg["sbx_virus_id"]["host_decontam"]:
+        return "decontam"
+    else:
+        return "cleaned"
+
 
 rule all_virus_id:
     input:
@@ -35,8 +41,8 @@ rule all_virus_id:
 
 rule virus_id_megahit_paired:
     input:
-        r1=QC_FP / "decontam" / "{sample}_1.fastq.gz",
-        r2=QC_FP / "decontam" / "{sample}_2.fastq.gz",
+        r1=QC_FP / host_decontam_Q() / "{sample}_1.fastq.gz",
+        r2=QC_FP / host_decontam_Q() / "{sample}_2.fastq.gz",
     output:
         ASSEMBLY_FP / "virus_id_megahit" / "{sample}_asm" / "final.contigs.fa",
     benchmark:
@@ -143,6 +149,9 @@ rule cenote_taker2:
         out_dir=str(VIRUS_FP / "cenote_taker2"),
         sample="{sample}",
         db_fp=Cfg["sbx_virus_id"]["cenote_taker2_db"]
+    resources:
+        mem_mb=24000,
+        runtime=720,
     shell:
         """
         CONDA_BASE=$(conda info --base)
