@@ -2,7 +2,7 @@ import csv
 from sunbeamlib.parse import parse_fasta, write_fasta
 
 
-with open(snakemake.input.summary) as f_summary, open(snakemake.input.contigs) as f_contigs, open(snakemake.output, "w") as f_out:
+with open(snakemake.input.summary) as f_summary, open(snakemake.input.contigs) as f_contigs, open(snakemake.output[0], "w") as f_out:
     dr = csv.DictReader(f_summary, delimiter="\t")
     cd = {}
     for line in dr:
