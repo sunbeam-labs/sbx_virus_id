@@ -140,6 +140,7 @@ rule cenote_taker2:
         install=VIRUS_FP / "cenote_taker2" / ".installed",
     output:
         VIRUS_FP / "cenote_taker2" / "{sample}" / "final.contigs.fasta",
+        VIRUS_FP / "cenote_taker2" / "{sample}" / "{sample}" / "{sample}_CONTIG_SUMMARY.tsv",
     benchmark:
         BENCHMARK_FP / "cenote_taker2_{sample}.tsv"
     log:
@@ -162,6 +163,16 @@ rule cenote_taker2:
         cd {params.sample}
         python {params.run_script} -c {input.contigs} -r {params.sample} -m 32 -t 32 -p true -db virion --cenote-dbs {params.db_fp} 2>&1 | tee {log}
         """
+
+
+rule filter_cenote_contigs:
+    input:
+        contigs=VIRUS_FP / "cenote_taker2" / "{sample}" / "final.contigs.fasta",
+        summary=VIRUS_FP / "cenote_taker2" / "{sample}" / "{sample}" / "{sample}_CONTIG_SUMMARY.tsv",
+    output:
+        VIRUS_FP / "cenote_taker2" / "{sample}.fasta",
+    script:
+        "scripts/filter_cenote_contigs.py"
 
 # Use --cenote-dbs to point to non-standard download path for dbs
 
@@ -195,10 +206,7 @@ rule cenote_taker2:
 rule virus_blastx:
     """Run diamond blastx on untranslated genes against a target db and write to blast tabular format."""
     input:
-        genes=VIRUS_FP
-        / "cenote_taker2"
-        / "{sample}"
-        / "final.contigs.fasta",
+        VIRUS_FP / "cenote_taker2" / "{sample}.fasta",
     output:
         VIRUS_FP / "blastx" / "{sample}.btf",
     benchmark:
@@ -215,9 +223,9 @@ rule virus_blastx:
         "sbx_virus_id.yml"
     shell:
         """
-        if [ -s {input.genes} ]; then
+        if [ -s {input} ]; then
             blastx \
-            -query {input.genes} \
+            -query {input} \
             -db {params.blastdb} \
             -outfmt 6 \
             -num_threads {threads} \
