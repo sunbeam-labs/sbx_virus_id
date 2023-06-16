@@ -171,6 +171,8 @@ rule filter_cenote_contigs:
         summary=VIRUS_FP / "cenote_taker2" / "{sample}" / "{sample}" / "{sample}_CONTIG_SUMMARY.tsv",
     output:
         VIRUS_FP / "cenote_taker2" / "{sample}.fasta",
+    params:
+        include_phages=Cfg["sbx_virus_id"]["include_phages"]
     script:
         "scripts/filter_cenote_contigs.py"
 

@@ -3,3 +3,4 @@ sbx_virus_id:
   blastx_threads: 4
   cenote_taker2_db: ''
   host_decontam: True
+  include_phages: False
