@@ -123,6 +123,7 @@ rule install_cenote_taker2:
             cd Cenote-Taker2/
             python update_ct2_databases.py --hmm True --protein True --rps True --taxdump True --hhCDD True --hhPFAM True --hhPDB True >> {log}
         else
+            mkdir -p {params.db_fp}
             cd {params.db_fp}
             python {params.ext_fp}/Cenote-Taker2/update_ct2_databases.py --hmm True --protein True --rps True --taxdump True --hhCDD True --hhPFAM True --hhPDB True >> {log}
         fi
@@ -133,10 +134,7 @@ rule install_cenote_taker2:
 
 rule cenote_taker2:
     input:
-        contigs=expand(
-            ASSEMBLY_FP / "virus_id_megahit" / "{sample}_asm" / "final.contigs.fa",
-            sample=Samples.keys(),
-        ),
+        contigs=ASSEMBLY_FP / "virus_id_megahit" / "{sample}_asm" / "final.contigs.fa",
         install=VIRUS_FP / "cenote_taker2" / ".installed",
     output:
         VIRUS_FP / "cenote_taker2" / "{sample}" / "final.contigs.fasta",
@@ -175,8 +173,6 @@ rule filter_cenote_contigs:
         include_phages=Cfg["sbx_virus_id"]["include_phages"]
     script:
         "scripts/filter_cenote_contigs.py"
-
-# Use --cenote-dbs to point to non-standard download path for dbs
 
 
 # Install blast db:
