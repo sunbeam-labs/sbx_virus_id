@@ -95,41 +95,7 @@ rule install_cenote_taker2:
     resources:
         runtime=2400,
     shell:
-        """
-        cd {params.ext_fp}
-        if [ ! -d "Cenote-Taker2" ]; then
-            git clone https://github.com/mtisza1/Cenote-Taker2.git
-        else
-            echo "Cenote-Taker2 directory already exists"
-        fi
-
-        if {{ conda env list | grep 'cenote-taker2_env'; }} >/dev/null 2>&1; then
-            echo "Cenote-Taker2 env already exists"
-        else
-            conda create --name cenote-taker2_env --file cenote_taker2_env_explicit.txt
-        fi
-
-        CONDA_BASE=$(conda info --base)
-        source $CONDA_BASE/etc/profile.d/conda.sh
-        conda activate cenote-taker2_env
-
-        pip install phanotate
-
-        # check if all dbs are installed already
-
-
-        # with all the options (75GB). The PDB database (--hhPDB) takes about 2 hours to download.
-        if [ -z {params.db_fp} ]; then
-            cd Cenote-Taker2/
-            python update_ct2_databases.py --hmm True --protein True --rps True --taxdump True --hhCDD True --hhPFAM True --hhPDB True >> {log}
-        else
-            mkdir -p {params.db_fp}
-            cd {params.db_fp}
-            python {params.ext_fp}/Cenote-Taker2/update_ct2_databases.py --hmm True --protein True --rps True --taxdump True --hhCDD True --hhPFAM True --hhPDB True >> {log}
-        fi
-
-        touch {output}
-        """
+        "scripts/install_cenote_taker2.sh"
 
 
 rule cenote_taker2:
@@ -163,6 +129,9 @@ rule cenote_taker2:
         """
 
 
+
+
+
 rule filter_cenote_contigs:
     input:
         contigs=VIRUS_FP / "cenote_taker2" / "{sample}" / "final.contigs.fasta",
@@ -182,23 +151,6 @@ rule filter_cenote_contigs:
 # mkdir refseq_select_prot/
 # cd refseq_select_prot/
 # perl `which update_blastdb.pl` --decompress refseq_select_prot
-
-# rule build_virus_diamond_db:
-#    """Use diamond makedb to create any necessary db indeces that don't exist."""
-#    input:
-#        Cfg["sbx_virus_id"]["blast_db"],
-#    output:
-#        VIRUS_FP / "diamond" / ".prep",
-#    benchmark:
-#        BENCHMARK_FP / "build_virus_diamond_db.tsv"
-#    log:
-#        LOG_FP / "build_virus_diamond_db.log",
-#    conda:
-#        "sbx_virus_id.yml"
-#    shell:
-#        """
-#        diamond prepdb -d {input} 2>&1 | tee {log}
-#        """
 
 
 rule virus_blastx:
@@ -235,22 +187,4 @@ rule virus_blastx:
             echo "Caught empty query" >> {log}
             touch {output}
         fi
-        """
-
-
-rule hisss:
-    input:
-        expand(VIRUS_FP / "blastx" / "{sample}.btf", sample=Samples.keys()),
-    output:
-        VIRUS_FP / "hisss" / "summary" / "all_plot_summary.txt",
-        VIRUS_FP / "hisss" / "summary" / "all_align_summary.txt",
-    benchmark:
-        BENCHMARK_FP / "hisss.tsv"
-    log:
-        LOG_FP / "hisss.log",
-    conda:
-        "hisss_env.yml"
-    shell:
-        """
-        echo "HEY"
         """
