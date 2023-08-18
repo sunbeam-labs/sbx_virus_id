@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cd {params.ext_fp}
+cd $1
 if [ ! -d "Cenote-Taker2" ]; then
     git clone https://github.com/mtisza1/Cenote-Taker2.git
 else
@@ -19,21 +19,18 @@ fi
 
 pip install phanotate
 
-# check if all dbs are installed already
-
-
 # with all the options (75GB). The PDB database (--hhPDB) takes about 2 hours to download.
-if [ -z {params.db_fp} ]; then
+if [ -z $2 ]; then
     cd Cenote-Taker2/
     if [ -d "pdb70/" ]; then
         echo "CenoteTaker2 DBs already installed"
     else
-        python update_ct2_databases.py --hmm True --protein True --rps True --taxdump True --hhCDD True --hhPFAM True --hhPDB True >> {log}
+        python update_ct2_databases.py --hmm True --protein True --rps True --taxdump True --hhCDD True --hhPFAM True --hhPDB True >> $4
     fi
 else
-    mkdir -p {params.db_fp}
-    cd {params.db_fp}
-    python {params.ext_fp}/Cenote-Taker2/update_ct2_databases.py --hmm True --protein True --rps True --taxdump True --hhCDD True --hhPFAM True --hhPDB True >> {log}
+    mkdir -p $2
+    cd $2
+    python $1/Cenote-Taker2/update_ct2_databases.py --hmm True --protein True --rps True --taxdump True --hhCDD True --hhPFAM True --hhPDB True >> $4
 fi
 
-touch {output}
+touch $3
