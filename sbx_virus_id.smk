@@ -27,6 +27,7 @@ def get_ext_path() -> Path:
         "Filepath for virus_id not found, are you sure it's installed under extensions/sbx_virus_id?"
     )
 
+
 def host_decontam_Q() -> str:
     if Cfg["sbx_virus_id"]["host_decontam"]:
         return "decontam"
@@ -91,7 +92,7 @@ rule install_cenote_taker2:
         LOG_FP / "install_cenote_taker2.log",
     params:
         ext_fp=str(get_ext_path()),
-        db_fp=Cfg["sbx_virus_id"]["cenote_taker2_db"]
+        db_fp=Cfg["sbx_virus_id"]["cenote_taker2_db"],
     resources:
         runtime=2400,
     conda:
@@ -106,7 +107,11 @@ rule cenote_taker2:
         install=VIRUS_FP / "cenote_taker2" / ".installed",
     output:
         VIRUS_FP / "cenote_taker2" / "{sample}" / "final.contigs.fasta",
-        VIRUS_FP / "cenote_taker2" / "{sample}" / "{sample}" / "{sample}_CONTIG_SUMMARY.tsv",
+        VIRUS_FP
+        / "cenote_taker2"
+        / "{sample}"
+        / "{sample}"
+        / "{sample}_CONTIG_SUMMARY.tsv",
     benchmark:
         BENCHMARK_FP / "cenote_taker2_{sample}.tsv"
     log:
@@ -115,7 +120,7 @@ rule cenote_taker2:
         run_script=str(get_ext_path() / "Cenote-Taker2" / "run_cenote-taker2.py"),
         out_dir=str(VIRUS_FP / "cenote_taker2"),
         sample="{sample}",
-        db_fp=Cfg["sbx_virus_id"]["cenote_taker2_db"]
+        db_fp=Cfg["sbx_virus_id"]["cenote_taker2_db"],
     resources:
         mem_mb=24000,
         runtime=720,
@@ -133,74 +138,78 @@ rule cenote_taker2:
 rule filter_cenote_contigs:
     input:
         contigs=VIRUS_FP / "cenote_taker2" / "{sample}" / "final.contigs.fasta",
-        summary=VIRUS_FP / "cenote_taker2" / "{sample}" / "{sample}" / "{sample}_CONTIG_SUMMARY.tsv",
+        summary=VIRUS_FP
+        / "cenote_taker2"
+        / "{sample}"
+        / "{sample}"
+        / "{sample}_CONTIG_SUMMARY.tsv",
     output:
         VIRUS_FP / "cenote_taker2" / "{sample}.fasta",
     params:
-        include_phages=Cfg["sbx_virus_id"]["include_phages"]
+        include_phages=Cfg["sbx_virus_id"]["include_phages"],
     script:
         "scripts/filter_cenote_contigs.py"
 
 
 rule build_virus_index:
-	input:
-		VIRUS_FP / "cenote_taker2" / "{sample}.fasta"
-	output:
-		VIRUS_FP / "cenote_taker2" / "{sample}.fasta.1.bt2"
-	threads: Cfg["sbx_virus_id"]["bowtie2_build_threads"]
+    input:
+        VIRUS_FP / "cenote_taker2" / "{sample}.fasta",
+    output:
+        VIRUS_FP / "cenote_taker2" / "{sample}.fasta.1.bt2",
     conda:
         "envs/sbx_virus_id.yml"
-	shell:
-		"bowtie2-build --threads {threads} -f {input} {input}"
+    threads: Cfg["sbx_virus_id"]["bowtie2_build_threads"]
+    shell:
+        "bowtie2-build --threads {threads} -f {input} {input}"
 
 
 rule align_virus_reads:
-	input:
-		r1=QC_FP / host_decontam_Q() / "{sample}_1.fastq.gz",
+    input:
+        r1=QC_FP / host_decontam_Q() / "{sample}_1.fastq.gz",
         r2=QC_FP / host_decontam_Q() / "{sample}_2.fastq.gz",
-		index=VIRUS_FP / "cenote_taker2" / "{sample}.fasta.1.bt2"
-	output:
-		temp(VIRUS_FP / "alignments" / "{sample}.sam")
-	params:
-		index=VIRUS_FP / "cenote_taker2" / "{sample}.fasta"
-	threads: 6
+        index=VIRUS_FP / "cenote_taker2" / "{sample}.fasta.1.bt2",
+    output:
+        temp(VIRUS_FP / "alignments" / "{sample}.sam"),
+    params:
+        index=VIRUS_FP / "cenote_taker2" / "{sample}.fasta",
+    threads: 6
     conda:
         "envs/sbx_virus_id.yml"
-	shell:
-		"bowtie2 -q --local -t --very-sensitive-local --threads {threads} --no-mixed --no-discordant -x {params.index} -1 {input.r1} -2 {input.r2} -S {output}"
+    shell:
+        "bowtie2 -q --local -t --very-sensitive-local --threads {threads} --no-mixed --no-discordant -x {params.index} -1 {input.r1} -2 {input.r2} -S {output}"
 
 
 rule process_virus_alignment:
-	input:
-		VIRUS_FP / "alignments" / "{sample}.sam",
-	output:
-		bam = temp(VIRUS_FP / "alignments" / "{sample}.bam"),
-		sorted = temp(VIRUS_FP / "alignments" / "{sample}.sorted.bam"),
-		bai = temp(VIRUS_FP / "alignments" / "{sample}.sorted.bam.bai"),
-	params:
-		target=VIRUS_FP / "cenote_taker2" / "{sample}.fasta"
+    input:
+        VIRUS_FP / "alignments" / "{sample}.sam",
+    output:
+        bam=temp(VIRUS_FP / "alignments" / "{sample}.bam"),
+        sorted=temp(VIRUS_FP / "alignments" / "{sample}.sorted.bam"),
+        bai=temp(VIRUS_FP / "alignments" / "{sample}.sorted.bam.bai"),
+    params:
+        target=VIRUS_FP / "cenote_taker2" / "{sample}.fasta",
     conda:
         "envs/sbx_virus_id.yml"
-	shell:
-		"""
-		samtools view -bT {params.target} {input} > {output.bam}
-		samtools sort -o {output.sorted} {output.bam}
-		samtools index {output.sorted} {output.bai}
-		"""
+    shell:
+        """
+        samtools view -bT {params.target} {input} > {output.bam}
+        samtools sort -o {output.sorted} {output.bam}
+        samtools index {output.sorted} {output.bai}
+        """
 
 
 rule calculate_virus_coverage:
-	input:
-		bam = VIRUS_FP / "alignments" / "{sample}.sorted.bam",
-		idx = VIRUS_FP / "alignments" / "{sample}.sorted.bam.bai",
-	output:
-		VIRUS_FP / "alignments" / "{sample}.genomecoverage.txt",
+    input:
+        bam=VIRUS_FP / "alignments" / "{sample}.sorted.bam",
+        idx=VIRUS_FP / "alignments" / "{sample}.sorted.bam.bai",
+    output:
+        VIRUS_FP / "alignments" / "{sample}.genomecoverage.txt",
     conda:
         "envs/sbx_virus_id.yml"
-	shell:
-		"""
-		samtools view -b {input.bam} | genomeCoverageBed -ibam stdin | grep -v 'genome' | perl scripts/coverage_counter.pl > {output}
-		"""
+    shell:
+        """
+        samtools view -b {input.bam} | genomeCoverageBed -ibam stdin | grep -v 'genome' | perl scripts/coverage_counter.pl > {output}
+        """
 
 
 rule filter_virus_coverage:
