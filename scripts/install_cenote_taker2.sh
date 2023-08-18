@@ -25,7 +25,11 @@ pip install phanotate
 # with all the options (75GB). The PDB database (--hhPDB) takes about 2 hours to download.
 if [ -z {params.db_fp} ]; then
     cd Cenote-Taker2/
-    python update_ct2_databases.py --hmm True --protein True --rps True --taxdump True --hhCDD True --hhPFAM True --hhPDB True >> {log}
+    if [ -d "pdb70/" ]; then
+        echo "CenoteTaker2 DBs already installed"
+    else
+        python update_ct2_databases.py --hmm True --protein True --rps True --taxdump True --hhCDD True --hhPFAM True --hhPDB True >> {log}
+    fi
 else
     mkdir -p {params.db_fp}
     cd {params.db_fp}
