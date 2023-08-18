@@ -99,7 +99,7 @@ rule install_cenote_taker2:
     shell:
         """
         cd {params.ext_fp}
-        bash scripts/install_cenote_taker2.sh {params.ext_fp} {params.db_fp} {output} {log}
+        bash scripts/install_cenote_taker2.sh {params.ext_fp} {output} {log} {params.db_fp}
         """
 
 
