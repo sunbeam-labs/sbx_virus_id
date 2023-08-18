@@ -4,8 +4,7 @@
 
 VIRUS_FP = Cfg["all"]["output_fp"] / "virus"
 TARGET_VIRUS_ID = [
-    VIRUS_FP / "hisss" / "summary" / "all_plot_summary.txt",
-    VIRUS_FP / "hisss" / "summary" / "all_align_summary.txt",
+    VIRUS_FP / "blastx" / f"{sample}.btf" for sample in Samples.keys()
 ]
 
 
