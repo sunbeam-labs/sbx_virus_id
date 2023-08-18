@@ -149,7 +149,7 @@ rule build_virus_index:
 		VIRUS_FP / "cenote_taker2" / "{sample}.fasta.1.bt2"
 	threads: Cfg["sbx_virus_id"]["bowtie2_build_threads"]
     conda:
-        "envs/hisss_env.yml"
+        "envs/sbx_virus_id.yml"
 	shell:
 		"bowtie2-build --threads {threads} -f {input} {input}"
 
@@ -164,6 +164,8 @@ rule align_virus_reads:
 	params:
 		index=VIRUS_FP / "cenote_taker2" / "{sample}.fasta"
 	threads: 6
+    conda:
+        "envs/sbx_virus_id.yml"
 	shell:
 		"bowtie2 -q --local -t --very-sensitive-local --threads {threads} --no-mixed --no-discordant -x {params.index} -1 {input.r1} -2 {input.r2} -S {output}"
 
@@ -178,7 +180,7 @@ rule process_virus_alignment:
 	params:
 		target=VIRUS_FP / "cenote_taker2" / "{sample}.fasta"
     conda:
-        "envs/hisss_env.yml"
+        "envs/sbx_virus_id.yml"
 	shell:
 		"""
 		samtools view -bT {params.target} {input} > {output.bam}
@@ -194,10 +196,10 @@ rule calculate_virus_coverage:
 	output:
 		VIRUS_FP / "alignments" / "{sample}.genomecoverage.txt",
     conda:
-        "envs/hisss_env.yml"
+        "envs/sbx_virus_id.yml"
 	shell:
 		"""
-		samtools view -b {input.bam} | genomeCoverageBed -ibam stdin | grep -v 'genome' | perl scripts/coverage_counter.pl > {output}	
+		samtools view -b {input.bam} | genomeCoverageBed -ibam stdin | grep -v 'genome' | perl scripts/coverage_counter.pl > {output}
 		"""
 
 

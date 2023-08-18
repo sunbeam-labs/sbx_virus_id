@@ -2,5 +2,8 @@ name: sbx_virus_id_env
 channels:
   - bioconda
 dependencies:
+  - bedtools
   - blast
-  - diamond
+  - bowtie2
+  - samtools
+  - python>=3.10
