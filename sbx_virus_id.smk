@@ -96,7 +96,7 @@ rule install_cenote_taker2:
         runtime=2400,
     conda:
         "envs/cenote_taker2_env.yml"
-    shell:
+    script:
         "scripts/install_cenote_taker2.sh"
 
 
