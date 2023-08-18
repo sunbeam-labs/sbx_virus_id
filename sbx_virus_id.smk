@@ -173,7 +173,7 @@ rule align_virus_reads:
     output:
         temp(VIRUS_FP / "alignments" / "{sample}.sam"),
     params:
-        index=VIRUS_FP / "cenote_taker2" / "{sample}.fasta",
+        index=str(VIRUS_FP / "cenote_taker2" / "{sample}.fasta"),
     threads: 6
     conda:
         "envs/sbx_virus_id.yml"
@@ -189,7 +189,7 @@ rule process_virus_alignment:
         sorted=temp(VIRUS_FP / "alignments" / "{sample}.sorted.bam"),
         bai=temp(VIRUS_FP / "alignments" / "{sample}.sorted.bam.bai"),
     params:
-        target=VIRUS_FP / "cenote_taker2" / "{sample}.fasta",
+        target=str(VIRUS_FP / "cenote_taker2" / "{sample}.fasta"),
     conda:
         "envs/sbx_virus_id.yml"
     shell:
