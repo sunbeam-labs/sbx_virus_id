@@ -97,7 +97,10 @@ rule install_cenote_taker2:
     conda:
         "envs/cenote_taker2_env.yml"
     shell:
-        "bash scripts/install_cenote_taker2.sh {params.ext_fp} {params.db_fp} {output} {log}"
+        """
+        cd {params.ext_fp}
+        bash scripts/install_cenote_taker2.sh {params.ext_fp} {params.db_fp} {output} {log}
+        """
 
 
 rule cenote_taker2:
