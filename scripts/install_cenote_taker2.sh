@@ -7,15 +7,15 @@ else
     echo "Cenote-Taker2 directory already exists"
 fi
 
-if {{ conda env list | grep 'cenote-taker2_env'; }} >/dev/null 2>&1; then
-    echo "Cenote-Taker2 env already exists"
-else
-    conda create --name cenote-taker2_env --file cenote_taker2_env_explicit.txt
-fi
+#if {{ conda env list | grep 'cenote-taker2_env'; }} >/dev/null 2>&1; then
+#    echo "Cenote-Taker2 env already exists"
+#else
+#    conda create --name cenote-taker2_env --file cenote_taker2_env_explicit.txt
+#fi
 
-CONDA_BASE=$(conda info --base)
-source $CONDA_BASE/etc/profile.d/conda.sh
-conda activate cenote-taker2_env
+#CONDA_BASE=$(conda info --base)
+#source $CONDA_BASE/etc/profile.d/conda.sh
+#conda activate cenote-taker2_env
 
 pip install phanotate
 

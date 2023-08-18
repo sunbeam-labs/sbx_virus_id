@@ -53,7 +53,7 @@ rule virus_id_megahit_paired:
         out_fp=str(ASSEMBLY_FP / "virus_id_megahit" / "{sample}_asm"),
     threads: 4
     conda:
-        "megahit_env.yml"
+        "envs/megahit_env.yml"
     resources:
         mem_mb=20000,
         runtime=720,
@@ -94,6 +94,8 @@ rule install_cenote_taker2:
         db_fp=Cfg["sbx_virus_id"]["cenote_taker2_db"]
     resources:
         runtime=2400,
+    conda:
+        "envs/cenote_taker2_env.yml"
     shell:
         "scripts/install_cenote_taker2.sh"
 
@@ -117,19 +119,15 @@ rule cenote_taker2:
     resources:
         mem_mb=24000,
         runtime=720,
+    conda:
+        "envs/cenote_taker2_env.yml"
     shell:
         """
-        CONDA_BASE=$(conda info --base)
-        source $CONDA_BASE/etc/profile.d/conda.sh
-        conda activate cenote-taker2_env
         cd {params.out_dir}
         mkdir -p {params.sample}
         cd {params.sample}
         python {params.run_script} -c {input.contigs} -r {params.sample} -m 32 -t 32 -p true -db virion --cenote-dbs {params.db_fp} 2>&1 | tee {log}
         """
-
-
-
 
 
 rule filter_cenote_contigs:
@@ -142,6 +140,75 @@ rule filter_cenote_contigs:
         include_phages=Cfg["sbx_virus_id"]["include_phages"]
     script:
         "scripts/filter_cenote_contigs.py"
+
+
+rule build_virus_index:
+	input:
+		VIRUS_FP / "cenote_taker2" / "{sample}.fasta"
+	output:
+		VIRUS_FP / "cenote_taker2" / "{sample}.fasta.1.bt2"
+	threads: Cfg["sbx_virus_id"]["bowtie2_build_threads"]
+    conda:
+        "envs/hisss_env.yml"
+	shell:
+		"bowtie2-build --threads {threads} -f {input} {input}"
+
+
+rule align_virus_reads:
+	input:
+		r1=QC_FP / host_decontam_Q() / "{sample}_1.fastq.gz",
+        r2=QC_FP / host_decontam_Q() / "{sample}_2.fastq.gz",
+		index=VIRUS_FP / "cenote_taker2" / "{sample}.fasta.1.bt2"
+	output:
+		temp(VIRUS_FP / "alignments" / "{sample}.sam")
+	params:
+		index=VIRUS_FP / "cenote_taker2" / "{sample}.fasta"
+	threads: 6
+	shell:
+		"bowtie2 -q --local -t --very-sensitive-local --threads {threads} --no-mixed --no-discordant -x {params.index} -1 {input.r1} -2 {input.r2} -S {output}"
+
+
+rule process_virus_alignment:
+	input:
+		VIRUS_FP / "alignments" / "{sample}.sam",
+	output:
+		bam = temp(VIRUS_FP / "alignments" / "{sample}.bam"),
+		sorted = temp(VIRUS_FP / "alignments" / "{sample}.sorted.bam"),
+		bai = temp(VIRUS_FP / "alignments" / "{sample}.sorted.bam.bai"),
+	params:
+		target=VIRUS_FP / "cenote_taker2" / "{sample}.fasta"
+    conda:
+        "envs/hisss_env.yml"
+	shell:
+		"""
+		samtools view -bT {params.target} {input} > {output.bam}
+		samtools sort -o {output.sorted} {output.bam}
+		samtools index {output.sorted} {output.bai}
+		"""
+
+
+rule calculate_virus_coverage:
+	input:
+		bam = VIRUS_FP / "alignments" / "{sample}.sorted.bam",
+		idx = VIRUS_FP / "alignments" / "{sample}.sorted.bam.bai",
+	output:
+		VIRUS_FP / "alignments" / "{sample}.genomecoverage.txt",
+    conda:
+        "envs/hisss_env.yml"
+	shell:
+		"""
+		samtools view -b {input.bam} | genomeCoverageBed -ibam stdin | grep -v 'genome' | perl scripts/coverage_counter.pl > {output}	
+		"""
+
+
+rule filter_virus_coverage:
+    input:
+        VIRUS_FP / "cenote_taker2" / "{sample}.fasta",
+        VIRUS_FP / "alignments" / "{sample}.genomecoverage.txt",
+    output:
+        VIRUS_FP / "final_contigs.fasta",
+    shell:
+        "scripts/filter_virus_coverage.py"
 
 
 # Install blast db:
@@ -170,7 +237,7 @@ rule virus_blastx:
         mem_mb=24000,
         runtime=720,
     conda:
-        "sbx_virus_id.yml"
+        "envs/sbx_virus_id.yml"
     shell:
         """
         if [ -s {input} ]; then
