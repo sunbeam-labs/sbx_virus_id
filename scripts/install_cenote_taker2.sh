@@ -30,7 +30,7 @@ if [ -z $4 ]; then
         python update_ct2_databases.py --hmm True --protein True --rps True --taxdump True --hhCDD True --hhPFAM True --hhPDB True >> $3
     fi
 else
-    echo "Using $4 as location for CenoteTaker2 database
+    echo "Using $4 as location for CenoteTaker2 database"
     mkdir -p $4
     cd $4
     python $1/Cenote-Taker2/update_ct2_databases.py --hmm True --protein True --rps True --taxdump True --hhCDD True --hhPFAM True --hhPDB True >> $3
