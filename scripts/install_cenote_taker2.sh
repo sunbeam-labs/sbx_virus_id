@@ -33,7 +33,12 @@ else
     echo "Using $4 as location for CenoteTaker2 database"
     mkdir -p $4
     cd $4
-    python $1/Cenote-Taker2/update_ct2_databases.py --hmm True --protein True --rps True --taxdump True --hhCDD True --hhPFAM True --hhPDB True >> $3
+    if [ -d "pdb70/" ]; then
+        echo "CenoteTaker2 DBs already installed"
+    else
+        echo "Installing CenoteTaker2 DBs"
+        python $1/Cenote-Taker2/update_ct2_databases.py --hmm True --protein True --rps True --taxdump True --hhCDD True --hhPFAM True --hhPDB True >> $3
+    fi
 fi
 
 touch $2
