@@ -219,7 +219,7 @@ rule filter_virus_coverage:
         VIRUS_FP / "cenote_taker2" / "{sample}.fasta",
         VIRUS_FP / "alignments" / "{sample}.genomecoverage.txt",
     output:
-        VIRUS_FP / "final_contigs.fasta",
+        VIRUS_FP / "final_{sample}_contigs.fasta",
     shell:
         "scripts/filter_virus_coverage.py"
 
@@ -236,7 +236,7 @@ rule filter_virus_coverage:
 rule virus_blastx:
     """Run diamond blastx on untranslated genes against a target db and write to blast tabular format."""
     input:
-        VIRUS_FP / "final_contigs.fasta",
+        VIRUS_FP / "final_{sample}_contigs.fasta",
     output:
         VIRUS_FP / "blastx" / "{sample}.btf",
     benchmark:
