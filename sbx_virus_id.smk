@@ -206,11 +206,13 @@ rule calculate_virus_coverage:
         idx=VIRUS_FP / "alignments" / "{sample}.sorted.bam.bai",
     output:
         VIRUS_FP / "alignments" / "{sample}.genomecoverage.txt",
+    params:
+        ext_fp=str(get_ext_path()),
     conda:
         "envs/sbx_virus_id.yml"
     shell:
         """
-        samtools view -b {input.bam} | genomeCoverageBed -ibam stdin | grep -v 'genome' | perl scripts/coverage_counter.pl > {output}
+        samtools view -b {input.bam} | genomeCoverageBed -ibam stdin | grep -v 'genome' | perl {params.ext_fp}/scripts/coverage_counter.pl > {output}
         """
 
 
