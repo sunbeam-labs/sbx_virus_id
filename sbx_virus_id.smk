@@ -218,8 +218,8 @@ rule calculate_virus_coverage:
 
 rule filter_virus_coverage:
     input:
-        VIRUS_FP / "cenote_taker2" / "{sample}.fasta",
-        VIRUS_FP / "alignments" / "{sample}.sorted.idxstats.tsv",
+        fa=VIRUS_FP / "cenote_taker2" / "{sample}.fasta",
+        idx=VIRUS_FP / "alignments" / "{sample}.sorted.idxstats.tsv",
     output:
         VIRUS_FP / "final_{sample}_contigs.fasta",
     shell:
