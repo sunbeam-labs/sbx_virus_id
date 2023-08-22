@@ -222,7 +222,7 @@ rule filter_virus_coverage:
         idx=VIRUS_FP / "alignments" / "{sample}.sorted.idxstats.tsv",
     output:
         VIRUS_FP / "final_{sample}_contigs.fasta",
-    shell:
+    script:
         "scripts/filter_virus_coverage.py"
 
 
