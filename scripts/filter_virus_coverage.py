@@ -12,7 +12,7 @@ with open(snakemake.input.idx) as f_idx:
             else:
                 contigs[row[0]] = 0
 
-with open(snakemake.log[0], "w") as f_log:
+with open(snakemake.log, "w") as f_log:
     f_log.write(f"Contigs: {contigs}")
 
 with open(snakemake.input.fa) as f_fa, open(snakemake.output[0], "w") as f_out:
