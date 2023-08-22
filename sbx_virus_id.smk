@@ -18,7 +18,7 @@ except NameError:
     LOG_FP = Cfg["all"]["output_fp"] / "logs"
 
 
-def get_ext_path() -> Path:
+def get_virus_ext_path() -> Path:
     ext_path = Path(sunbeam_dir) / "extensions" / "sbx_virus_id"
     if ext_path.exists():
         return ext_path
@@ -90,7 +90,7 @@ rule install_cenote_taker2:
     log:
         LOG_FP / "install_cenote_taker2.log",
     params:
-        ext_fp=str(get_ext_path()),
+        ext_fp=str(get_virus_ext_path()),
         db_fp=Cfg["sbx_virus_id"]["cenote_taker2_db"],
     resources:
         runtime=2400,
@@ -119,7 +119,7 @@ rule cenote_taker2:
     log:
         LOG_FP / "cenote_taker2_{sample}.log",
     params:
-        run_script=str(get_ext_path() / "Cenote-Taker2" / "run_cenote-taker2.py"),
+        run_script=str(get_virus_ext_path() / "Cenote-Taker2" / "run_cenote-taker2.py"),
         out_dir=str(VIRUS_FP / "cenote_taker2"),
         sample="{sample}",
         db_fp=Cfg["sbx_virus_id"]["cenote_taker2_db"],
@@ -205,21 +205,21 @@ rule calculate_virus_coverage:
         bam=VIRUS_FP / "alignments" / "{sample}.sorted.bam",
         idx=VIRUS_FP / "alignments" / "{sample}.sorted.bam.bai",
     output:
-        VIRUS_FP / "alignments" / "{sample}.genomecoverage.txt",
+        VIRUS_FP / "alignments" / "{sample}.sorted.idxstats.tsv",
     params:
-        ext_fp=str(get_ext_path()),
+        ext_fp=str(get_virus_ext_path()),
     conda:
         "envs/sbx_virus_id.yml"
     shell:
         """
-        samtools view -b {input.bam} | genomeCoverageBed -ibam stdin | grep -v 'genome' | perl {params.ext_fp}/scripts/coverage_counter.pl > {output}
+        samtools idxstats {input.bam} > {output}
         """
 
 
 rule filter_virus_coverage:
     input:
         VIRUS_FP / "cenote_taker2" / "{sample}.fasta",
-        VIRUS_FP / "alignments" / "{sample}.genomecoverage.txt",
+        VIRUS_FP / "alignments" / "{sample}.sorted.idxstats.tsv",
     output:
         VIRUS_FP / "final_{sample}_contigs.fasta",
     shell:
