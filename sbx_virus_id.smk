@@ -238,7 +238,7 @@ rule filter_virus_coverage:
 
 
 rule virus_blastx:
-    """Run diamond blastx on untranslated genes against a target db and write to blast tabular format."""
+    """Run blastx on untranslated genes against a target db and write to blast tabular format."""
     input:
         VIRUS_FP / "final_{sample}_contigs.fasta",
     output:
@@ -258,9 +258,10 @@ rule virus_blastx:
     shell:
         """
         if [ -s {input} ]; then
+            export BLASTDB=$(dirname {params.blast_db})
             blastx \
             -query {input} \
-            -db {params.blastdb} \
+            -db $(basename {params.blast_db}) \
             -outfmt 6 \
             -num_threads {threads} \
             -evalue 0.05 \

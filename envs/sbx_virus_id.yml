@@ -1,5 +1,6 @@
 name: sbx_virus_id_env
 channels:
+  - conda-forge
   - bioconda
 dependencies:
   - bedtools
