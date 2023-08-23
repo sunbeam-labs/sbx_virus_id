@@ -228,15 +228,6 @@ rule filter_virus_coverage:
         "scripts/filter_virus_coverage.py"
 
 
-# Install blast db:
-# conda create -n blast
-# conda activate blast
-# conda install -c bioconda blast
-# mkdir refseq_select_prot/
-# cd refseq_select_prot/
-# perl `which update_blastdb.pl` --decompress refseq_select_prot
-
-
 rule virus_blastx:
     """Run blastx on untranslated genes against a target db and write to blast tabular format."""
     input:
