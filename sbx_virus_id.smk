@@ -248,7 +248,7 @@ rule virus_blastx:
     log:
         LOG_FP / "run_virus_blastx_{sample}.log",
     params:
-        blastdb=Cfg["sbx_virus_id"]["blast_db"],
+        blast_db=Cfg["sbx_virus_id"]["blast_db"],
     threads: Cfg["sbx_virus_id"]["blastx_threads"]
     resources:
         mem_mb=24000,
