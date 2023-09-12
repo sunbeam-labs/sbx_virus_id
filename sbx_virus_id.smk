@@ -271,11 +271,13 @@ rule calculate_coverage:
         idx=VIRUS_FP / "alignments" / "{sample}.sorted.bam.bai",
     output:
         VIRUS_FP / "alignments" / "{sample}.genomecoverage.txt",
+    params:
+        ext_fp=str(get_virus_ext_path()),
     conda:
         "envs/sbx_virus_id.yml"
     shell:
         """
-        samtools view -b {input.bam} | genomeCoverageBed -ibam stdin | grep -v 'genome'| perl scripts/coverage_counter.pl > {output}
+        samtools view -b {input.bam} | genomeCoverageBed -ibam stdin | grep -v 'genome'| perl {params.ext_fp}/scripts/coverage_counter.pl > {output}
         """
 
 
@@ -285,9 +287,11 @@ rule combine_coverage_stats:
         stats=VIRUS_FP / "alignments" / "{sample}.sorted.idxstats.tsv",
     output:
         VIRUS_FP / "alignments" / "{sample}.align.summary.txt",
+    params:
+        ext_fp=str(get_virus_ext_path()),
     shell:
         """
-        Rscript scripts/combine_coverage_stats.R {input.cov} {input.stats} {output}
+        Rscript {params.ext_fp}/scripts/combine_coverage_stats.R {input.cov} {input.stats} {output}
         """
 
 
