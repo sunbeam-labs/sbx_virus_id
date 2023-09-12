@@ -4,7 +4,8 @@
 
 VIRUS_FP = Cfg["all"]["output_fp"] / "virus"
 TARGET_VIRUS_ID = [
-    VIRUS_FP / "blastx" / f"{sample}.btf" for sample in Samples.keys()
+    VIRUS_FP / "blastx" / f"{sample}.btf"
+    for sample in Samples.keys(), VIRUS_FP / "summary" / "all_align_summary.txt",
 ]
 
 
@@ -200,7 +201,7 @@ rule process_virus_alignment:
         """
 
 
-rule calculate_virus_coverage:
+rule calculate_mapping_stats:
     input:
         bam=VIRUS_FP / "alignments" / "{sample}.sorted.bam",
         idx=VIRUS_FP / "alignments" / "{sample}.sorted.bam.bai",
@@ -223,7 +224,7 @@ rule filter_virus_coverage:
     output:
         VIRUS_FP / "final_{sample}_contigs.fasta",
     log:
-        LOG_FP / "filter_virus_coverage_{sample}.log"
+        LOG_FP / "filter_virus_coverage_{sample}.log",
     script:
         "scripts/filter_virus_coverage.py"
 
@@ -263,4 +264,45 @@ rule virus_blastx:
             echo "Caught empty query" >> {log}
             touch {output}
         fi
+        """
+
+
+rule calculate_coverage:
+    input:
+        bam=VIRUS_FP / "alignments" / "{sample}.sorted.bam",
+        idx=VIRUS_FP / "alignments" / "{sample}.sorted.bam.bai",
+    output:
+        VIRUS_FP / "alignments" / "{sample}.genomecoverage.txt",
+    conda:
+        "envs/sbx_virus_id.yml"
+    shell:
+        """
+        samtools view -b {input.bam} | genomeCoverageBed -ibam stdin | grep -v 'genome'| perl scripts/coverage_counter.pl > {output}
+        """
+
+
+rule combine_coverage_stats:
+    input:
+        cov=VIRUS_FP / "alignments" / "{sample}.genomecoverage.txt",
+        stats=VIRUS_FP / "alignments" / "{sample}.sorted.idxstats.tsv",
+    output:
+        VIRUS_FP / "alignments" / "{sample}.align.summary.txt",
+    shell:
+        """
+        Rscript scripts/combine_coverage_stats.R {input.cov} {input.stats} {output}
+        """
+
+
+rule all_summary:
+    input:
+        expand(
+            VIRUS_FP / "alignments" / "{sample}.align.summary.txt",
+            sample=Samples.keys(),
+        ),
+    output:
+        VIRUS_FP / "summary" / "all_align_summary.txt",
+    shell:
+        """
+        echo -e "Sample\tAlignTarget\tFractionCoverage\tTargetLength\tMappedReads" > {output}
+        cat {input} >> {output}
         """
