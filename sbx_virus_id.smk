@@ -3,11 +3,8 @@
 # Rules for running Cenote-Taker2 and other tools in the viral id pipeline
 
 VIRUS_FP = Cfg["all"]["output_fp"] / "virus"
-TARGET_VIRUS_OUTPUT = [
-    VIRUS_FP / "blastx" / f"{sample}.btf" for sample in Samples.keys()
-]
-TARGET_VIRUS_SUMMARY = VIRUS_FP / "summary" / "all_align_summary.txt"
-TARGET_VIRUS_ID = TARGET_VIRUS_OUTPUT.append(TARGET_VIRUS_SUMMARY)
+TARGET_VIRUS_ID = [VIRUS_FP / "blastx" / f"{sample}.btf" for sample in Samples.keys()]
+TARGET_VIRUS_ID.append(VIRUS_FP / "summary" / "all_align_summary.txt")
 
 
 try:
