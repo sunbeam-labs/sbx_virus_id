@@ -33,6 +33,20 @@ def host_decontam_Q() -> str:
         return "cleaned"
 
 
+def virus_sorter_input() -> Path:
+    if Cfg["sbx_virus_id"]["use_spades"]:
+        return ASSEMBLY_FP / "virus_id_spades" / "scaffolds.fasta"
+    else:
+        return ASSEMBLY_FP / "virus_id_megahit" / "{sample}_asm" / "final.contigs.fa"
+
+
+def virus_sorter_output() -> Path:
+    if Cfg["sbx_virus_id"]["use_virsorter"]:
+        return VIRUS_FP / "virsorter" / "{sample}.fasta"
+    else:
+        return VIRUS_FP / "cenote_taker2" / "{sample}.fasta"
+
+
 rule all_virus_id:
     input:
         TARGET_VIRUS_ID,
@@ -81,6 +95,30 @@ rule virus_id_megahit_paired:
         """
 
 
+rule virus_id_spades_paired:
+    input:
+        r1=QC_FP / host_decontam_Q() / "{sample}_1.fastq.gz",
+        r2=QC_FP / host_decontam_Q() / "{sample}_2.fastq.gz",
+    output:
+        ASSEMBLY_FP / "virus_id_spades" / "scaffolds.fasta",
+    benchmark:
+        BENCHMARK_FP / "virus_id_spades_paired_{sample}.tsv"
+    log:
+        LOG_FP / "virus_id_spades_paired_{sample}.log",
+    params:
+        out_fp=str(ASSEMBLY_FP / "virus_id_spades"),
+    threads: 4
+    conda:
+        "envs/extras_env.yml"
+    resources:
+        mem_mb=20000,
+        runtime=720,
+    shell:
+        """
+        spades -1 {input.r1} -2 {input.r2} -t {threads} -o {params.out_fp} --continue 2>&1 | tee {log}
+        """
+
+
 rule install_cenote_taker2:
     output:
         VIRUS_FP / "cenote_taker2" / ".installed",
@@ -104,7 +142,7 @@ rule install_cenote_taker2:
 
 rule cenote_taker2:
     input:
-        contigs=ASSEMBLY_FP / "virus_id_megahit" / "{sample}_asm" / "final.contigs.fa",
+        contigs=virus_sorter_input(),
         install=VIRUS_FP / "cenote_taker2" / ".installed",
     output:
         VIRUS_FP / "cenote_taker2" / "{sample}" / "final.contigs.fasta",
@@ -129,10 +167,34 @@ rule cenote_taker2:
         "envs/cenote_taker2_env.yml"
     shell:
         """
+        if [[ {params.sample} == *"."* ]]; then
+            echo "CenoteTaker2 doesn't allow sample names with '.' in them"
+            exit 1
+        fi
+
         cd {params.out_dir}
         mkdir -p {params.sample}
         cd {params.sample}
+        
         python {params.run_script} -c {input.contigs} -r {params.sample} -m 32 -t 32 -p true -db virion --cenote-dbs {params.db_fp} 2>&1 | tee {log}
+        """
+
+
+rule virsorter:
+    input:
+        contigs=virus_sorter_input(),
+    output:
+        VIRUS_FP / "virsorter" / "{sample}" / "Predicted_viral_sequences/VIRSorter_cat-1.fasta",
+    benchmark:
+        BENCHMARK_FP / "virsorter_{sample}.tsv"
+    log:
+        LOG_FP / "virsorter_{sample}.log",
+    params:
+        out_dir=str(VIRUS_FP / "virsorter"),
+    threads: 4
+    shell:
+        """
+        virsorter run -w {params.out_dir} -i {input.contigs} -j {threads} all
         """
 
 
@@ -152,11 +214,20 @@ rule filter_cenote_contigs:
         "scripts/filter_cenote_contigs.py"
 
 
+rule filter_virsorter_contigs:
+    input:
+        contigs=VIRUS_FP / "virsorter" / "{sample}" / "Predicted_viral_sequences/VIRSorter_cat-1.fasta",
+    output:
+        VIRUS_FP / "virsorter" / "{sample}.fasta",
+    script:
+        "scripts/filter_virsorter_contigs.py"
+
+
 rule build_virus_index:
     input:
-        VIRUS_FP / "cenote_taker2" / "{sample}.fasta",
+        virus_sorter_output(),
     output:
-        VIRUS_FP / "cenote_taker2" / "{sample}.fasta.1.bt2",
+        f"{virus_sorter_output()}.1.bt2",
     conda:
         "envs/sbx_virus_id.yml"
     threads: Cfg["sbx_virus_id"]["bowtie2_build_threads"]
@@ -168,11 +239,11 @@ rule align_virus_reads:
     input:
         r1=QC_FP / host_decontam_Q() / "{sample}_1.fastq.gz",
         r2=QC_FP / host_decontam_Q() / "{sample}_2.fastq.gz",
-        index=VIRUS_FP / "cenote_taker2" / "{sample}.fasta.1.bt2",
+        index=f"{virus_sorter_output()}.1.bt2",
     output:
         temp(VIRUS_FP / "alignments" / "{sample}.sam"),
     params:
-        index=str(VIRUS_FP / "cenote_taker2" / "{sample}.fasta"),
+        index=str(virus_sorter_output()),
     threads: 6
     conda:
         "envs/sbx_virus_id.yml"
@@ -188,7 +259,7 @@ rule process_virus_alignment:
         sorted=temp(VIRUS_FP / "alignments" / "{sample}.sorted.bam"),
         bai=temp(VIRUS_FP / "alignments" / "{sample}.sorted.bam.bai"),
     params:
-        target=str(VIRUS_FP / "cenote_taker2" / "{sample}.fasta"),
+        target=str(virus_sorter_output()),
     conda:
         "envs/sbx_virus_id.yml"
     shell:
@@ -217,7 +288,7 @@ rule calculate_mapping_stats:
 
 rule filter_virus_coverage:
     input:
-        fa=VIRUS_FP / "cenote_taker2" / "{sample}.fasta",
+        fa=virus_sorter_output(),
         idx=VIRUS_FP / "alignments" / "{sample}.sorted.idxstats.tsv",
     output:
         VIRUS_FP / "final_{sample}_contigs.fasta",

@@ -1,0 +1,7 @@
+channels:
+  - bioconda
+dependencies:
+  - spades
+  - virsorter
+  #- python =12.0.0
+name: extras_env
