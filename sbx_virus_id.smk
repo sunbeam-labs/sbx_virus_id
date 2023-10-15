@@ -35,7 +35,7 @@ def host_decontam_Q() -> str:
 
 def virus_sorter_input() -> Path:
     if Cfg["sbx_virus_id"]["use_spades"]:
-        return ASSEMBLY_FP / "virus_id_spades" / "scaffolds.fasta"
+        return ASSEMBLY_FP / "virus_id_spades" / "{sample}" / "scaffolds.fasta"
     else:
         return ASSEMBLY_FP / "virus_id_megahit" / "{sample}_asm" / "final.contigs.fa"
 
@@ -100,13 +100,13 @@ rule virus_id_spades_paired:
         r1=QC_FP / host_decontam_Q() / "{sample}_1.fastq.gz",
         r2=QC_FP / host_decontam_Q() / "{sample}_2.fastq.gz",
     output:
-        ASSEMBLY_FP / "virus_id_spades" / "scaffolds.fasta",
+        ASSEMBLY_FP / "virus_id_spades" / "{sample}" / "scaffolds.fasta",
     benchmark:
         BENCHMARK_FP / "virus_id_spades_paired_{sample}.tsv"
     log:
         LOG_FP / "virus_id_spades_paired_{sample}.log",
     params:
-        out_fp=str(ASSEMBLY_FP / "virus_id_spades"),
+        out_fp=str(ASSEMBLY_FP / "virus_id_spades" / "{sample}"),
     threads: 4
     conda:
         "envs/extras_env.yml"
