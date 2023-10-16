@@ -116,7 +116,9 @@ rule virus_id_spades_paired:
     shell:
         """
         mkdir -p {params.out_fp}
-        spades.py -1 {input.r1} -2 {input.r2} -t {threads} -o {params.out_fp} --continue 2>&1 | tee {log}
+        gzip -d < {input.r1} > {params.out_fp}/{wildcards.sample}_1.fastq
+        gzip -d < {input.r2} > {params.out_fp}/{wildcards.sample}_2.fastq
+        spades.py -1 {params.out_fp}/{wildcards.sample}_1.fastq -2 {params.out_fp}/{wildcards.sample}_1.fastq -t {threads} -o {params.out_fp} --continue 2>&1 | tee {log}
         """
 
 
