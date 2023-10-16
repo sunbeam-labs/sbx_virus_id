@@ -115,7 +115,8 @@ rule virus_id_spades_paired:
         runtime=720,
     shell:
         """
-        spades -1 {input.r1} -2 {input.r2} -t {threads} -o {params.out_fp} --continue 2>&1 | tee {log}
+        mkdir {params.out_fp}
+        spades.py -1 {input.r1} -2 {input.r2} -t {threads} -o {params.out_fp} --continue 2>&1 | tee {log}
         """
 
 
