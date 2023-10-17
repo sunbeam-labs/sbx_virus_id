@@ -3,6 +3,7 @@ sbx_virus_id:
   blastx_threads: 4
   bowtie2_build_threads: 4
   cenote_taker2_db: ''
+  virsorter_db: ''
   host_decontam: True
   include_phages: False
   use_spades: False # Default: Megahit

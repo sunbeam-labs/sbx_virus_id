@@ -180,17 +180,49 @@ rule cenote_taker2:
         """
 
 
+rule install_virsorter:
+    output:
+        VIRUS_FP / "virsorter" / ".installed",
+    benchmark:
+        BENCHMARK_FP / "install_virsorter.tsv"
+    log:
+        LOG_FP / "install_virsorter.log",
+    params:
+        db_fp=Cfg["sbx_virus_id"]["virsorter_db"],
+    resources:
+        runtime=2400,
+    threads: 4
+    conda:
+        "envs/extras_env.yml"
+    shell:
+        """
+        # First check if directory exists and has files
+        if [ -d {params.db_fp} ] && [ "$(ls -A {params.db_fp})" ]; then
+            echo "VirSorter database already installed"
+            touch {output}
+            exit 0
+        fi
+
+        echo "Installing VirSorter database"
+        virsorter setup -d {params.db_fp} -j 4
+        touch {output}
+        """
+
+
 rule virsorter:
     input:
         contigs=virus_sorter_input(),
+        install=VIRUS_FP / "virsorter" / ".installed",
     output:
-        VIRUS_FP / "virsorter" / "{sample}" / "Predicted_viral_sequences/VIRSorter_cat-1.fasta",
+        combined_viral=VIRUS_FP / "virsorter" / "{sample}" / "final-viral-combined.fa",
+        scores=VIRUS_FP / "virsorter" / "{sample}" / "final-viral-score.tsv",
+        boundaries=VIRUS_FP / "virsorter" / "{sample}" / "final-viral-boundary.tsv",
     benchmark:
         BENCHMARK_FP / "virsorter_{sample}.tsv"
     log:
         LOG_FP / "virsorter_{sample}.log",
     params:
-        out_dir=str(VIRUS_FP / "virsorter"),
+        out_dir=str(VIRUS_FP / "virsorter" / "{sample}"),
     threads: 4
     shell:
         """
@@ -216,7 +248,7 @@ rule filter_cenote_contigs:
 
 rule filter_virsorter_contigs:
     input:
-        contigs=VIRUS_FP / "virsorter" / "{sample}" / "Predicted_viral_sequences/VIRSorter_cat-1.fasta",
+        contigs=VIRUS_FP / "virsorter" / "{sample}" / "final-viral-combined.fa",
     output:
         VIRUS_FP / "virsorter" / "{sample}.fasta",
     script:
