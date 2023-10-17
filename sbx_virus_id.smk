@@ -109,7 +109,7 @@ rule virus_id_spades_paired:
         out_fp=str(ASSEMBLY_FP / "virus_id_spades" / "{sample}"),
     threads: 4
     conda:
-        "envs/extras_env.yml"
+        "envs/spades_env.yml"
     resources:
         mem_mb=20000,
         runtime=720,
@@ -193,7 +193,7 @@ rule install_virsorter:
         runtime=2400,
     threads: 4
     conda:
-        "envs/extras_env.yml"
+        "envs/virsorter_env.yml"
     shell:
         """
         # First check if directory exists and has files
@@ -224,6 +224,8 @@ rule virsorter:
     params:
         out_dir=str(VIRUS_FP / "virsorter" / "{sample}"),
     threads: 4
+    conda:
+        "envs/virsorter_env.yml"
     shell:
         """
         virsorter run -w {params.out_dir} -i {input.contigs} -j {threads} all
