@@ -228,7 +228,7 @@ rule virsorter:
         "envs/virsorter_env.yml"
     shell:
         """
-        virsorter run -w {params.out_dir} -i {input.contigs} -j {threads} all
+        virsorter run -w {params.out_dir} -i {input.contigs} --min-length 1000 -j {threads} all
         """
 
 
