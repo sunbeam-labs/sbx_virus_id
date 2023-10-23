@@ -223,12 +223,13 @@ rule virsorter:
         LOG_FP / "virsorter_{sample}.log",
     params:
         out_dir=str(VIRUS_FP / "virsorter" / "{sample}"),
+        db_fp=Cfg["sbx_virus_id"]["virsorter_db"],
     threads: 4
     conda:
         "envs/virsorter_env.yml"
     shell:
         """
-        virsorter run -w {params.out_dir} -i {input.contigs} --min-length 1000 -j {threads} all
+        virsorter run -w {params.out_dir} -i {input.contigs} --min-length 1000 -j {threads} --db-dir {params.db_fp} all
         """
 
 
