@@ -393,11 +393,17 @@ rule combine_coverage_stats:
         stats=VIRUS_FP / "alignments" / "{sample}.sorted.idxstats.tsv",
     output:
         VIRUS_FP / "alignments" / "{sample}.align.summary.txt",
+    benchmark:
+        BENCHMARK_FP / "combine_coverage_stats_{sample}.tsv"
+    log:
+        LOG_FP / "combine_coverage_stats_{sample}.log",
     params:
         ext_fp=str(get_virus_ext_path()),
+    conda:
+        "envs/r_env.yml"
     shell:
         """
-        Rscript {params.ext_fp}/scripts/combine_coverage_stats.R {input.cov} {input.stats} {output}
+        Rscript {params.ext_fp}/scripts/combine_coverage_stats.R {input.cov} {input.stats} {output} 2>&1 | tee {log}
         """
 
 
