@@ -224,6 +224,9 @@ rule virsorter:
     params:
         out_dir=str(VIRUS_FP / "virsorter" / "{sample}"),
         db_fp=Cfg["sbx_virus_id"]["virsorter_db"],
+    resources:
+        mem_mb=24000,
+        runtime=720,
     threads: 4
     conda:
         "envs/virsorter_env.yml"
