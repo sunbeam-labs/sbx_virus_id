@@ -3,8 +3,6 @@
 # Rules for running Cenote-Taker2 and other tools in the viral id pipeline
 
 VIRUS_FP = Cfg["all"]["output_fp"] / "virus"
-TARGET_VIRUS_ID = [VIRUS_FP / "blastx" / f"{sample}.btf" for sample in Samples.keys()]
-TARGET_VIRUS_ID.append(VIRUS_FP / "summary" / "all_align_summary.txt")
 
 
 try:
@@ -49,7 +47,8 @@ def virus_sorter_output() -> Path:
 
 rule all_virus_id:
     input:
-        TARGET_VIRUS_ID,
+        expand(VIRUS_FP / "blastx" / "{sample}.btf", sample=Samples.keys()),
+        VIRUS_FP / "summary" / "all_align_summary.txt",
 
 
 rule virus_id_megahit_paired:
