@@ -264,7 +264,7 @@ rule build_virus_index:
     input:
         virus_sorter_output(),
     output:
-        virus_sorter_output() + ".1.bt2", # Don't use f-string, broken with python 3.12
+        str(virus_sorter_output()) + ".1.bt2", # Don't use f-string, broken with python 3.12
     conda:
         "envs/sbx_virus_id.yml"
     threads: Cfg["sbx_virus_id"]["bowtie2_build_threads"]
@@ -276,7 +276,7 @@ rule align_virus_reads:
     input:
         r1=QC_FP / host_decontam_Q() / "{sample}_1.fastq.gz",
         r2=QC_FP / host_decontam_Q() / "{sample}_2.fastq.gz",
-        index=virus_sorter_output() + ".1.bt2", # Don't use f-string, broken with python 3.12
+        index=str(virus_sorter_output()) + ".1.bt2", # Don't use f-string, broken with python 3.12
     output:
         temp(VIRUS_FP / "alignments" / "{sample}.sam"),
     params:
