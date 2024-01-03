@@ -24,18 +24,11 @@ def get_virus_ext_path() -> Path:
     )
 
 
-def host_decontam_Q() -> str:
-    if Cfg["sbx_virus_id"]["host_decontam"]:
-        return "decontam"
-    else:
-        return "cleaned"
-
-
 def virus_sorter_input() -> Path:
     if Cfg["sbx_virus_id"]["use_spades"]:
         return ASSEMBLY_FP / "virus_id_spades" / "{sample}" / "scaffolds.fasta"
     else:
-        return ASSEMBLY_FP / "virus_id_megahit" / "{sample}_asm" / "final.contigs.fa"
+        return ASSEMBLY_FP / "megahit" / "{sample}_asm" / "final.contigs.fa"
 
 
 def virus_sorter_output() -> Path:
@@ -51,53 +44,10 @@ rule all_virus_id:
         VIRUS_FP / "summary" / "all_align_summary.txt",
 
 
-rule virus_id_megahit_paired:
-    input:
-        r1=QC_FP / host_decontam_Q() / "{sample}_1.fastq.gz",
-        r2=QC_FP / host_decontam_Q() / "{sample}_2.fastq.gz",
-    output:
-        ASSEMBLY_FP / "virus_id_megahit" / "{sample}_asm" / "final.contigs.fa",
-    benchmark:
-        BENCHMARK_FP / "virus_id_megahit_paired_{sample}.tsv"
-    log:
-        LOG_FP / "virus_id_megahit_paired_{sample}.log",
-    params:
-        out_fp=str(ASSEMBLY_FP / "virus_id_megahit" / "{sample}_asm"),
-    threads: 4
-    conda:
-        "envs/megahit_env.yml"
-    resources:
-        mem_mb=20000,
-        runtime=720,
-    shell:
-        """
-        ## turn off bash strict mode
-        set +o pipefail
-
-        ## sometimes the error is due to lack of memory
-        exitcode=0
-        if [ -d {params.out_fp} ]
-        then
-            echo "Clearing previous megahit directory..." > {log}
-            rm -rf {params.out_fp}
-        fi
-        megahit -t {threads} -1 {input.r1} -2 {input.r2} -o {params.out_fp} --continue 2>&1 {log} || exitcode=$?
-
-        if [ $exitcode -eq 255 ]
-        then
-            touch {output}
-            echo "Empty contigs" 2>&1 | tee {log}
-        elif [ $exitcode -gt 1 ]
-        then
-            echo "Check your memory" 2>&1 | tee {log}
-        fi
-        """
-
-
 rule virus_id_spades_paired:
     input:
-        r1=QC_FP / host_decontam_Q() / "{sample}_1.fastq.gz",
-        r2=QC_FP / host_decontam_Q() / "{sample}_2.fastq.gz",
+        r1=QC_FP / "decontam" / "{sample}_1.fastq.gz",
+        r2=QC_FP / "decontam" / "{sample}_2.fastq.gz",
     output:
         ASSEMBLY_FP / "virus_id_spades" / "{sample}" / "scaffolds.fasta",
     benchmark:
@@ -274,8 +224,8 @@ rule build_virus_index:
 
 rule align_virus_reads:
     input:
-        r1=QC_FP / host_decontam_Q() / "{sample}_1.fastq.gz",
-        r2=QC_FP / host_decontam_Q() / "{sample}_2.fastq.gz",
+        r1=QC_FP / "decontam" / "{sample}_1.fastq.gz",
+        r2=QC_FP / "decontam" / "{sample}_2.fastq.gz",
         index=str(virus_sorter_output()) + ".1.bt2", # Don't use f-string, broken with python 3.12
     output:
         temp(VIRUS_FP / "alignments" / "{sample}.sam"),

@@ -1,5 +1,0 @@
-name: megahit_env
-channels:
-  - bioconda
-dependencies:
-  - megahit

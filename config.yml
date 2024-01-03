@@ -4,7 +4,6 @@ sbx_virus_id:
   bowtie2_build_threads: 4
   cenote_taker2_db: ''
   virsorter_db: ''
-  host_decontam: True
   include_phages: False
   use_spades: False # Default: Megahit
   use_virsorter: False # Default: Cenote-Taker2
