@@ -23,6 +23,7 @@ def get_virus_ext_path() -> Path:
         "Filepath for virus_id not found, are you sure it's installed under extensions/sbx_virus_id?"
     )
 
+
 SBX_VIRUS_ID_VERSION = open(get_mapping_path() / "VERSION").read().strip()
 
 
@@ -226,7 +227,7 @@ rule build_virus_index:
     input:
         virus_sorter_output(),
     output:
-        str(virus_sorter_output()) + ".1.bt2", # Don't use f-string, broken with python 3.12
+        str(virus_sorter_output()) + ".1.bt2",  # Don't use f-string, broken with python 3.12
     conda:
         "envs/sbx_virus_id.yml"
     container:
@@ -240,7 +241,7 @@ rule align_virus_reads:
     input:
         r1=QC_FP / "decontam" / "{sample}_1.fastq.gz",
         r2=QC_FP / "decontam" / "{sample}_2.fastq.gz",
-        index=str(virus_sorter_output()) + ".1.bt2", # Don't use f-string, broken with python 3.12
+        index=str(virus_sorter_output()) + ".1.bt2",  # Don't use f-string, broken with python 3.12
     output:
         temp(VIRUS_FP / "alignments" / "{sample}.sam"),
     params:
