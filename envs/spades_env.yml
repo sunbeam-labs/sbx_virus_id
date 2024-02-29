@@ -2,4 +2,4 @@ channels:
   - bioconda
 dependencies:
   - spades
-name: spades_env
+name: spades

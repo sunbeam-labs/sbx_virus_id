@@ -2,7 +2,7 @@ sbx_virus_id:
   blast_db: ''
   blastx_threads: 4
   bowtie2_build_threads: 4
-  cenote_taker2_db: ''
+  cenote_taker_db: ''
   virsorter_db: ''
   include_phages: False
   use_spades: False # Default: Megahit

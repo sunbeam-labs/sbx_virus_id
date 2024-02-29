@@ -1,0 +1,63 @@
+name: Push to DockerHub
+
+on:
+  workflow_call:
+
+  workflow_dispatch:
+
+jobs:
+    build-and-push-to-dockerhub:
+        name: Push Docker image to Docker Hub
+        runs-on: ubuntu-latest
+    
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+            
+            - name: Log in to Docker Hub
+              uses: docker/login-action@v3
+              with:
+                username: ${{ secrets.DOCKERHUB_USERNAME }}
+                password: ${{ secrets.DOCKERHUB_TOKEN }}
+            
+            - name: Extract metadata (tags, labels) for Docker
+              id: meta
+              uses: docker/metadata-action@v5
+              with:
+                images: sunbeamlabs/sbx_virus_id
+            
+            - name: Build and push Docker image for cenote taker
+              uses: docker/build-push-action@v5
+              with:
+                context: .
+                file: envs/cenote_taker_env.Dockerfile
+                push: true
+                tags: ${{ steps.meta.outputs.tags }}-cenote-taker
+                labels: ${{ steps.meta.outputs.labels }}
+
+            - name: Build and push Docker image for sbx_virus_id
+              uses: docker/build-push-action@v5
+              with:
+                context: .
+                file: envs/sbx_virus_id.Dockerfile
+                push: true
+                tags: ${{ steps.meta.outputs.tags }}-sbx-virus-id
+                labels: ${{ steps.meta.outputs.labels }}
+
+            - name: Build and push Docker image for spades
+              uses: docker/build-push-action@v5
+              with:
+                context: .
+                file: envs/spades_env.Dockerfile
+                push: true
+                tags: ${{ steps.meta.outputs.tags }}-spades
+                labels: ${{ steps.meta.outputs.labels }}
+            
+            - name: Build and push Docker image for virsorter
+              uses: docker/build-push-action@v5
+              with:
+                context: .
+                file: envs/virsorter_env.Dockerfile
+                push: true
+                tags: ${{ steps.meta.outputs.tags }}-virsorter
+                labels: ${{ steps.meta.outputs.labels }}

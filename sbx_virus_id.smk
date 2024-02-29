@@ -23,6 +23,8 @@ def get_virus_ext_path() -> Path:
         "Filepath for virus_id not found, are you sure it's installed under extensions/sbx_virus_id?"
     )
 
+SBX_VIRUS_ID_VERSION = open(get_mapping_path() / "VERSION").read().strip()
+
 
 def virus_sorter_input() -> Path:
     if Cfg["sbx_virus_id"]["use_spades"]:
@@ -35,7 +37,7 @@ def virus_sorter_output() -> Path:
     if Cfg["sbx_virus_id"]["use_virsorter"]:
         return VIRUS_FP / "virsorter" / "{sample}.fasta"
     else:
-        return VIRUS_FP / "cenote_taker2" / "{sample}.fasta"
+        return VIRUS_FP / "cenote_taker" / "{sample}.fasta"
 
 
 rule all_virus_id:
@@ -59,6 +61,8 @@ rule virus_id_spades_paired:
     threads: 4
     conda:
         "envs/spades_env.yml"
+    container:
+        f"docker://sunbeamlabs/sbx_virus_id:{SBX_VIRUS_ID_VERSION}-spades"
     resources:
         mem_mb=20000,
         runtime=720,
@@ -68,20 +72,22 @@ rule virus_id_spades_paired:
         """
 
 
-rule install_cenote_taker2:
+rule install_cenote_taker:
     output:
-        VIRUS_FP / "cenote_taker2" / ".installed",
+        VIRUS_FP / "cenote_taker" / ".installed",
     benchmark:
-        BENCHMARK_FP / "install_cenote_taker2.tsv"
+        BENCHMARK_FP / "install_cenote_taker.tsv"
     log:
-        LOG_FP / "install_cenote_taker2.log",
+        LOG_FP / "install_cenote_taker.log",
     params:
         ext_fp=str(get_virus_ext_path()),
-        db_fp=Cfg["sbx_virus_id"]["cenote_taker2_db"],
+        db_fp=Cfg["sbx_virus_id"]["cenote_taker_db"],
     resources:
         runtime=2400,
     conda:
-        "envs/cenote_taker2_env.yml"
+        "envs/cenote_taker_env.yml"
+    container:
+        f"docker://sunbeamlabs/sbx_virus_id:{SBX_VIRUS_ID_VERSION}-cenote-taker"
     shell:
         """
         cd {params.ext_fp}
@@ -89,31 +95,33 @@ rule install_cenote_taker2:
         """
 
 
-rule cenote_taker2:
+rule cenote_taker:
     input:
         contigs=virus_sorter_input(),
-        install=VIRUS_FP / "cenote_taker2" / ".installed",
+        install=VIRUS_FP / "cenote_taker" / ".installed",
     output:
-        VIRUS_FP / "cenote_taker2" / "{sample}" / "final.contigs.fasta",
+        VIRUS_FP / "cenote_taker" / "{sample}" / "final.contigs.fasta",
         VIRUS_FP
-        / "cenote_taker2"
+        / "cenote_taker"
         / "{sample}"
         / "{sample}"
         / "{sample}_CONTIG_SUMMARY.tsv",
     benchmark:
-        BENCHMARK_FP / "cenote_taker2_{sample}.tsv"
+        BENCHMARK_FP / "cenote_taker_{sample}.tsv"
     log:
-        LOG_FP / "cenote_taker2_{sample}.log",
+        LOG_FP / "cenote_taker_{sample}.log",
     params:
         run_script=str(get_virus_ext_path() / "Cenote-Taker2" / "run_cenote-taker2.py"),
-        out_dir=str(VIRUS_FP / "cenote_taker2"),
+        out_dir=str(VIRUS_FP / "cenote_taker"),
         sample="{sample}",
-        db_fp=Cfg["sbx_virus_id"]["cenote_taker2_db"],
+        db_fp=Cfg["sbx_virus_id"]["cenote_taker_db"],
     resources:
         mem_mb=24000,
         runtime=720,
     conda:
-        "envs/cenote_taker2_env.yml"
+        "envs/cenote_taker_env.yml"
+    container:
+        f"docker://sunbeamlabs/sbx_virus_id:{SBX_VIRUS_ID_VERSION}-cenote-taker"
     shell:
         """
         if [[ {params.sample} == *"."* ]]; then
@@ -143,6 +151,8 @@ rule install_virsorter:
     threads: 4
     conda:
         "envs/virsorter_env.yml"
+    container:
+        f"docker://sunbeamlabs/sbx_virus_id:{SBX_VIRUS_ID_VERSION}-virsorter"
     shell:
         """
         # First check if directory exists and has files
@@ -179,6 +189,8 @@ rule virsorter:
     threads: 4
     conda:
         "envs/virsorter_env.yml"
+    container:
+        f"docker://sunbeamlabs/sbx_virus_id:{SBX_VIRUS_ID_VERSION}-virsorter"
     shell:
         """
         virsorter run -w {params.out_dir} -i {input.contigs} --min-length 1000 -j {threads} --db-dir {params.db_fp} all
@@ -187,14 +199,14 @@ rule virsorter:
 
 rule filter_cenote_contigs:
     input:
-        contigs=VIRUS_FP / "cenote_taker2" / "{sample}" / "final.contigs.fasta",
+        contigs=VIRUS_FP / "cenote_taker" / "{sample}" / "final.contigs.fasta",
         summary=VIRUS_FP
-        / "cenote_taker2"
+        / "cenote_taker"
         / "{sample}"
         / "{sample}"
         / "{sample}_CONTIG_SUMMARY.tsv",
     output:
-        VIRUS_FP / "cenote_taker2" / "{sample}.fasta",
+        VIRUS_FP / "cenote_taker" / "{sample}.fasta",
     params:
         include_phages=Cfg["sbx_virus_id"]["include_phages"],
     script:
@@ -217,6 +229,8 @@ rule build_virus_index:
         str(virus_sorter_output()) + ".1.bt2", # Don't use f-string, broken with python 3.12
     conda:
         "envs/sbx_virus_id.yml"
+    container:
+        f"docker://sunbeamlabs/sbx_virus_id:{SBX_VIRUS_ID_VERSION}-sbx-virus-id"
     threads: Cfg["sbx_virus_id"]["bowtie2_build_threads"]
     shell:
         "bowtie2-build --threads {threads} -f {input} {input}"
@@ -234,6 +248,8 @@ rule align_virus_reads:
     threads: 6
     conda:
         "envs/sbx_virus_id.yml"
+    container:
+        f"docker://sunbeamlabs/sbx_virus_id:{SBX_VIRUS_ID_VERSION}-sbx-virus-id"
     shell:
         "bowtie2 -q --local -t --very-sensitive-local --threads {threads} --no-mixed --no-discordant -x {params.index} -1 {input.r1} -2 {input.r2} -S {output}"
 
@@ -249,6 +265,8 @@ rule process_virus_alignment:
         target=str(virus_sorter_output()),
     conda:
         "envs/sbx_virus_id.yml"
+    container:
+        f"docker://sunbeamlabs/sbx_virus_id:{SBX_VIRUS_ID_VERSION}-sbx-virus-id"
     shell:
         """
         samtools view -bT {params.target} {input} > {output.bam}
@@ -267,6 +285,8 @@ rule calculate_mapping_stats:
         ext_fp=str(get_virus_ext_path()),
     conda:
         "envs/sbx_virus_id.yml"
+    container:
+        f"docker://sunbeamlabs/sbx_virus_id:{SBX_VIRUS_ID_VERSION}-sbx-virus-id"
     shell:
         """
         samtools idxstats {input.bam} > {output}
@@ -303,6 +323,8 @@ rule virus_blastx:
         runtime=720,
     conda:
         "envs/sbx_virus_id.yml"
+    container:
+        f"docker://sunbeamlabs/sbx_virus_id:{SBX_VIRUS_ID_VERSION}-sbx-virus-id"
     shell:
         """
         if [ -s {input} ]; then
@@ -333,6 +355,8 @@ rule calculate_coverage:
         ext_fp=str(get_virus_ext_path()),
     conda:
         "envs/sbx_virus_id.yml"
+    container:
+        f"docker://sunbeamlabs/sbx_virus_id:{SBX_VIRUS_ID_VERSION}-sbx-virus-id"
     shell:
         """
         samtools view -b {input.bam} | genomeCoverageBed -ibam stdin | grep -v 'genome'| perl {params.ext_fp}/scripts/coverage_counter.pl > {output}
@@ -353,6 +377,8 @@ rule combine_coverage_stats:
         ext_fp=str(get_virus_ext_path()),
     conda:
         "envs/r_env.yml"
+    container:
+        "docker://r-base:latest"
     shell:
         """
         Rscript {params.ext_fp}/scripts/combine_coverage_stats.R {input.cov} {input.stats} {output} 2>&1 | tee {log}

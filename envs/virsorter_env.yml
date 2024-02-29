@@ -3,4 +3,4 @@ channels:
   - bioconda
 dependencies:
   - virsorter =2
-name: virsorter_env
+name: virsorter
