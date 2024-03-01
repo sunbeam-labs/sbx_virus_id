@@ -91,17 +91,23 @@ rule install_cenote_taker:
         f"docker://sunbeamlabs/sbx_virus_id:{SBX_VIRUS_ID_VERSION}-cenote-taker"
     shell:
         """
+        conda env config vars set CENOTE_DBS={params.db_fp}
+
         if [ -d {params.db_fp} ] && [ "$(ls -A {params.db_fp})" ]; then
             echo "Cenote-Taker database already installed"
             touch {output}
             exit 0
         fi
 
-        if [ {params.extra_dbs} ]; then
+        if [[ {params.extra_dbs} == "True" ]]; then
+            echo "Installing Cenote-Taker database with hhsuite"
             get_ct3_dbs -o {params.db_fp} --hmm T --mmseqs_tax T --mmseqs_cdd T --domain_list T --hhCDD T --hhPFAM T --hhPDB T
         else
+            echo "Installing Cenote-Taker database without hhsuite"
             get_ct3_dbs -o {params.db_fp} --hmm T --mmseqs_tax T --mmseqs_cdd T --domain_list T
         fi
+
+        touch {output}
         """
 
 
@@ -134,13 +140,22 @@ rule cenote_taker:
         f"docker://sunbeamlabs/sbx_virus_id:{SBX_VIRUS_ID_VERSION}-cenote-taker"
     shell:
         """
-        if [[ ${{#{params.sample}}} -lt 18 ]] && [[ {params.sample} =~ ^[a-zA-Z0-9_]+$ ]]; then
+        SAMPLE={params.sample}
+        if [[ ${{#SAMPLE}} -lt 18 ]] && [[ {params.sample} =~ ^[a-zA-Z0-9_]+$ ]]; then
             echo "Sample name format is valid"
         else
             echo "Cenote-Taker requires a sample name that is less than 18 characters and contains only alphanumeric characters and underscores"
             exit 1
         fi
 
+        if [ -s {input.contigs} ]; then
+            echo "Contigs file exists and is not empty"
+        else
+            echo "Contigs file is empty"
+            exit 1
+        fi
+
+        cd {params.out_dir}
         cenotetaker3 --contigs {input.contigs} -r {params.sample} -p T
         """
 

@@ -1,3 +1,4 @@
+import os
 import pytest
 import shutil
 import subprocess as sp
@@ -103,18 +104,17 @@ def dry_run_sunbeam(setup):
             [
                 "sunbeam",
                 "run",
-                "--conda-frontend",
-                "conda",
                 "--profile",
                 project_dir,
                 "all_virus_id",
-                "--directory",
-                tmpdir,
                 "-n",
             ]
         )
     except sp.CalledProcessError as e:
         sys.exit(e)
+
+    os.makedirs("logs", exist_ok=True)
+    os.makedirs("stats", exist_ok=True)
 
     benchmarks_fp = project_dir / "stats"
 
