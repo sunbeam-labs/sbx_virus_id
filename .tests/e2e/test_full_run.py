@@ -8,7 +8,6 @@ from pathlib import Path
 @pytest.fixture
 def setup(tmpdir):
     reads_fp = Path(".tests/data/reads/").resolve()
-    hosts_fp = Path(".tests/data/hosts/").resolve()
     db_fp = Path(".tests/data/db/").resolve()
 
     project_dir = tmpdir / "project"

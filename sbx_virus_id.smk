@@ -24,7 +24,7 @@ def get_virus_ext_path() -> Path:
     )
 
 
-SBX_VIRUS_ID_VERSION = open(get_mapping_path() / "VERSION").read().strip()
+SBX_VIRUS_ID_VERSION = open(get_virus_ext_path() / "VERSION").read().strip()
 
 
 def virus_sorter_input() -> Path:
