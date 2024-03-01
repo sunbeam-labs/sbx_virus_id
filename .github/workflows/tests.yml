@@ -64,12 +64,12 @@ jobs:
         with:
           other-extensions: "sunbeam-labs/sbx_assembly"
 
-      - name: Dump Logs
-        shell: bash
-        if: always()
-        run: tail -n +1 logs/*
+      #- name: Dump Logs
+      #  shell: bash
+      #  if: always()
+      #  run: tail -n +1 logs/*
       
-      - name: Dump Stats
-        shell: bash
-        if: always()
-        run: cat stats/*
+      #- name: Dump Stats
+      #  shell: bash
+      #  if: always()
+      #  run: cat stats/*
