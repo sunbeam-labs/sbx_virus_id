@@ -111,14 +111,14 @@ def dry_run_sunbeam(setup):
             ]
         )
     except sp.CalledProcessError as e:
+        os.makedirs("logs", exist_ok=True)
+        os.makedirs("stats", exist_ok=True)
         sys.exit(e)
 
     os.makedirs("logs", exist_ok=True)
     os.makedirs("stats", exist_ok=True)
 
-    benchmarks_fp = project_dir / "stats"
-
-    yield output_fp, benchmarks_fp
+    yield output_fp
 
 
 def test_dry_run(dry_run_sunbeam):
