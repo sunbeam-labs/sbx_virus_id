@@ -81,8 +81,8 @@ rule install_cenote_taker:
     log:
         LOG_FP / "install_cenote_taker.log",
     params:
-        #ext_fp=str(get_virus_ext_path()),
         db_fp=Cfg["sbx_virus_id"]["cenote_taker_db"],
+        extra_dbs=Cfg["sbx_virus_id"]["cenote_taker_extra_dbs"],
     resources:
         runtime=2400,
     conda:
@@ -91,7 +91,17 @@ rule install_cenote_taker:
         f"docker://sunbeamlabs/sbx_virus_id:{SBX_VIRUS_ID_VERSION}-cenote-taker"
     shell:
         """
-        get_ct3_dbs -o {params.db_fp} --hmm T --mmseqs_tax T --mmseqs_cdd T --domain_list T --hhCDD T --hhPFAM T --hhPDB T
+        if [ -d {params.db_fp} ] && [ "$(ls -A {params.db_fp})" ]; then
+            echo "Cenote-Taker database already installed"
+            touch {output}
+            exit 0
+        fi
+
+        if [ {params.extra_dbs} ]; then
+            get_ct3_dbs -o {params.db_fp} --hmm T --mmseqs_tax T --mmseqs_cdd T --domain_list T --hhCDD T --hhPFAM T --hhPDB T
+        else
+            get_ct3_dbs -o {params.db_fp} --hmm T --mmseqs_tax T --mmseqs_cdd T --domain_list T
+        fi
         """
 
 
@@ -124,16 +134,14 @@ rule cenote_taker:
         f"docker://sunbeamlabs/sbx_virus_id:{SBX_VIRUS_ID_VERSION}-cenote-taker"
     shell:
         """
-        if [[ {params.sample} == *"."* ]]; then
-            echo "CenoteTaker2 doesn't allow sample names with '.' in them"
+        if [[ ${{#{params.sample}}} -lt 18 ]] && [[ {params.sample} =~ ^[a-zA-Z0-9_]+$ ]]; then
+            echo "Sample name format is valid"
+        else
+            echo "Cenote-Taker requires a sample name that is less than 18 characters and contains only alphanumeric characters and underscores"
             exit 1
         fi
 
-        cd {params.out_dir}
-        mkdir -p {params.sample}
-        cd {params.sample}
-        
-        python {params.run_script} -c {input.contigs} -r {params.sample} -m 32 -t 32 -p true -db virion --cenote-dbs {params.db_fp} 2>&1 | tee {log}
+        cenotetaker3 --contigs {input.contigs} -r {params.sample} -p T
         """
 
 

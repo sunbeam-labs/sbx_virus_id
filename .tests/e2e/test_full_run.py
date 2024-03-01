@@ -29,6 +29,19 @@ def setup(tmpdir):
         ]
     )
 
+    config_str = f"sbx_virus_id: {{cenote_taker_extra_dbs: False}}"
+    sp.check_output(
+        [
+            "sunbeam",
+            "config",
+            "modify",
+            "-i",
+            "-s",
+            f"{config_str}",
+            f"{config_fp}",
+        ]
+    )
+
     yield tmpdir, project_dir
 
 
@@ -101,12 +114,7 @@ def dry_run_sunbeam(setup):
             ]
         )
     except sp.CalledProcessError as e:
-        shutil.copytree(output_fp / "logs", "logs/")
-        shutil.copytree(project_dir / "stats", "stats/")
         sys.exit(e)
-
-    shutil.copytree(output_fp / "logs", "logs/")
-    shutil.copytree(project_dir / "stats", "stats/")
 
     benchmarks_fp = project_dir / "stats"
 
