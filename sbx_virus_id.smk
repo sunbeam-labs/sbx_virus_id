@@ -81,7 +81,7 @@ rule install_cenote_taker:
     log:
         LOG_FP / "install_cenote_taker.log",
     params:
-        ext_fp=str(get_virus_ext_path()),
+        #ext_fp=str(get_virus_ext_path()),
         db_fp=Cfg["sbx_virus_id"]["cenote_taker_db"],
     resources:
         runtime=2400,
@@ -91,8 +91,7 @@ rule install_cenote_taker:
         f"docker://sunbeamlabs/sbx_virus_id:{SBX_VIRUS_ID_VERSION}-cenote-taker"
     shell:
         """
-        cd {params.ext_fp}
-        bash scripts/install_cenote_taker2.sh {params.ext_fp} {output} {log} {params.db_fp}
+        get_ct3_dbs -o {params.db_fp} --hmm T --mmseqs_tax T --mmseqs_cdd T --domain_list T --hhCDD T --hhPFAM T --hhPDB T
         """
 
 
