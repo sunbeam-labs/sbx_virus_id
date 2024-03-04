@@ -14,6 +14,12 @@ jobs:
             - name: Checkout
               uses: actions/checkout@v4
             
+            - name: Get sbx version
+              shell: bash
+              run: |
+                SBX_VER=$(cat VERSION)
+                echo "SBX_VER=$SBX_VER" >> $GITHUB_ENV
+            
             - name: Log in to Docker Hub
               uses: docker/login-action@v3
               with:
@@ -32,7 +38,7 @@ jobs:
                 context: .
                 file: envs/cenote_taker_env.Dockerfile
                 push: true
-                tags: ${{ steps.meta.outputs.tags }}-cenote-taker
+                tags: ${{ env.SBX_VER }}-cenote-taker
                 labels: ${{ steps.meta.outputs.labels }}
 
             - name: Build and push Docker image for sbx_virus_id
@@ -41,7 +47,7 @@ jobs:
                 context: .
                 file: envs/sbx_virus_id.Dockerfile
                 push: true
-                tags: ${{ steps.meta.outputs.tags }}-sbx-virus-id
+                tags: ${{ env.SBX_VER }}-sbx-virus-id
                 labels: ${{ steps.meta.outputs.labels }}
 
             - name: Build and push Docker image for spades
@@ -50,7 +56,7 @@ jobs:
                 context: .
                 file: envs/spades_env.Dockerfile
                 push: true
-                tags: ${{ steps.meta.outputs.tags }}-spades
+                tags: ${{ env.SBX_VER }}-spades
                 labels: ${{ steps.meta.outputs.labels }}
             
             - name: Build and push Docker image for virsorter
@@ -59,5 +65,5 @@ jobs:
                 context: .
                 file: envs/virsorter_env.Dockerfile
                 push: true
-                tags: ${{ steps.meta.outputs.tags }}-virsorter
+                tags: ${{ env.SBX_VER }}-virsorter
                 labels: ${{ steps.meta.outputs.labels }}

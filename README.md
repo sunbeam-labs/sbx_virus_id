@@ -2,7 +2,10 @@
 
 # sbx_virus_id
 
-
+<!-- badges: start -->
+[![Tests](https://github.com/sunbeam-labs/sbx_virus_id/actions/workflows/tests.yml/badge.svg)](https://github.com/sunbeam-labs/sbx_virus_id/actions/workflows/tests.yml)
+[![DockerHub](https://img.shields.io/docker/pulls/sunbeamlabs/sbx_virus_id)](https://hub.docker.com/repository/docker/sunbeamlabs/sbx_virus_id/)
+<!-- badges: end -->
 
 ## Introduction
 
