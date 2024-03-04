@@ -2,7 +2,8 @@ sbx_virus_id:
   blast_db: ''
   blastx_threads: 4
   bowtie2_build_threads: 4
-  cenote_taker2_db: ''
+  cenote_taker_db: ''
+  cenote_taker_extra_dbs: True # Download hhsuite databases (True, ~70GB) or only basic (False, ~3GB)
   virsorter_db: ''
   include_phages: False
   use_spades: False # Default: Megahit

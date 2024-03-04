@@ -1,4 +1,4 @@
-name: sbx_virus_id_env
+name: sbx_virus_id
 channels:
   - conda-forge
   - bioconda
