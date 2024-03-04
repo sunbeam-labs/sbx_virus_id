@@ -38,7 +38,7 @@ jobs:
                 context: .
                 file: envs/cenote_taker_env.Dockerfile
                 push: true
-                tags: ${{ env.SBX_VER }}-cenote-taker
+                tags: sunbeamlabs/sbx_virus_id:${{ env.SBX_VER }}-cenote-taker
                 labels: ${{ steps.meta.outputs.labels }}
 
             - name: Build and push Docker image for sbx_virus_id
@@ -47,7 +47,7 @@ jobs:
                 context: .
                 file: envs/sbx_virus_id.Dockerfile
                 push: true
-                tags: ${{ env.SBX_VER }}-sbx-virus-id
+                tags: sunbeamlabs/sbx_virus_id:${{ env.SBX_VER }}-sbx-virus-id
                 labels: ${{ steps.meta.outputs.labels }}
 
             - name: Build and push Docker image for spades
@@ -56,7 +56,7 @@ jobs:
                 context: .
                 file: envs/spades_env.Dockerfile
                 push: true
-                tags: ${{ env.SBX_VER }}-spades
+                tags: sunbeamlabs/sbx_virus_id:${{ env.SBX_VER }}-spades
                 labels: ${{ steps.meta.outputs.labels }}
             
             - name: Build and push Docker image for virsorter
@@ -65,5 +65,5 @@ jobs:
                 context: .
                 file: envs/virsorter_env.Dockerfile
                 push: true
-                tags: ${{ env.SBX_VER }}-virsorter
+                tags: sunbeamlabs/sbx_virus_id:${{ env.SBX_VER }}-virsorter
                 labels: ${{ steps.meta.outputs.labels }}
