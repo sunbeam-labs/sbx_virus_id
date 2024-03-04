@@ -67,6 +67,7 @@ jobs:
           uses: sunbeam-labs/sbx_test_action@v1
           with:
             test-directory: ".tests/e2e/"
+            other-extensions: "sunbeam-labs/sbx_assembly"
   
         - name: Dump Logs
           shell: bash
