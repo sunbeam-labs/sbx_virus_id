@@ -43,7 +43,10 @@ def virus_sorter_output() -> Path:
 
 rule all_virus_id:
     input:
-        expand(VIRUS_FP / "blastx" / "{sample}.btf", sample=Samples.keys()),
+        expand(
+            VIRUS_FP / "alignments" / "{sample}.gene_coverage.tsv",
+            sample=Samples.keys(),
+        ),
         VIRUS_FP / "summary" / "all_align_summary.txt",
 
 
@@ -304,8 +307,6 @@ rule calculate_mapping_stats:
         idx=VIRUS_FP / "alignments" / "{sample}.sorted.bam.bai",
     output:
         VIRUS_FP / "alignments" / "{sample}.sorted.idxstats.tsv",
-    params:
-        ext_fp=str(get_virus_ext_path()),
     conda:
         "envs/sbx_virus_id.yml"
     container:
@@ -313,6 +314,24 @@ rule calculate_mapping_stats:
     shell:
         """
         samtools idxstats {input.bam} > {output}
+        """
+
+
+rule virus_mpileup:
+    input:
+        bam=VIRUS_FP / "alignments" / "{sample}.sorted.bam",
+        idx=VIRUS_FP / "alignments" / "{sample}.sorted.bam.bai",
+    output:
+        VIRUS_FP / "alignments" / "{sample}.mpileup",
+    params:
+        contigs=virus_sorter_output(),
+    conda:
+        "envs/sbx_virus_id.yml"
+    container:
+        f"docker://sunbeamlabs/sbx_virus_id:{SBX_VIRUS_ID_VERSION}-sbx-virus-id"
+    shell:
+        """
+        samtools mpileup -f {params.contigs} {input.bam} > {output}
         """
 
 
@@ -406,6 +425,22 @@ rule combine_coverage_stats:
         """
         Rscript {params.ext_fp}/scripts/combine_coverage_stats.R {input.cov} {input.stats} {output} 2>&1 | tee {log}
         """
+
+
+rule virus_coverage_per_gene:
+    input:
+        mpileup=VIRUS_FP / "alignments" / "{sample}.mpileup",
+        btf=VIRUS_FP / "blastx" / "{sample}.btf",
+    output:
+        tsv=VIRUS_FP / "alignments" / "{sample}.gene_coverage.tsv",
+    params:
+        contigs=virus_sorter_output(),
+    conda:
+        "envs/sbx_virus_id.yml"
+    container:
+        f"docker://sunbeamlabs/sbx_virus_id:{SBX_VIRUS_ID_VERSION}-sbx-virus-id"
+    script:
+        "scripts/virus_coverage_per_gene.py"
 
 
 rule all_summary:
