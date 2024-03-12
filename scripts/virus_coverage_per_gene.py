@@ -1,5 +1,20 @@
 from typing import TextIO
 
+BLAST6_DEFAULTS = [
+    "qseqid",
+    "sseqid",
+    "pident",
+    "length",
+    "mismatch",
+    "gapopen",
+    "qstart",
+    "qend",
+    "sstart",
+    "send",
+    "evalue",
+    "bitscore",
+]
+
 
 # Step 1: Pileup Coverage Calculation
 def parse_coverage(pileup_f: TextIO) -> dict[str, list[int]]:
@@ -19,8 +34,10 @@ def collate_coverage_blast(
 ) -> list[str]:
     final_report = []
 
-    for line in btf.readlines()[1:]:
-        contig_id, gene_id, start_index, end_index = line.strip().split(",")
+    for line in btf.readlines():
+        contig_id, gene_id, _, _, _, _, start_index, end_index, _, _ = (
+            line.strip().split("\t")
+        )
         start_index, end_index = int(start_index), int(end_index)
 
         if contig_id in coverage_data:
