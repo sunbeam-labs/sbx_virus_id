@@ -20,7 +20,7 @@ def collate_coverage_blast(
     final_report = []
 
     for line in btf.readlines():
-        contig_id, gene_id, _, _, _, _, start_index, end_index, _, _, _, _ = (
+        contig_id, gene_id, _, _, _, _, start_index, end_index, _, _, _, _, title = (
             line.strip().split("\t")
         )
         start_index, end_index = int(start_index), int(end_index)
@@ -45,6 +45,7 @@ def collate_coverage_blast(
                     "Contig_ID": contig_id,
                     "Gene_ID": gene_id,
                     "Gene_Coverage": gene_coverage,
+                    "Annotation": title,
                 }
             )
 
@@ -53,10 +54,10 @@ def collate_coverage_blast(
 
 # Step 3: Writing to Output
 def write_output(final_report: list[str], output_f: TextIO) -> None:
-    output_f.write("Contig_ID\tGene_ID\tGene_Coverage\n")
+    output_f.write("Contig_ID\tGene_ID\tGene_Coverage\tAnnotation\n")
     for entry in final_report:
         output_f.write(
-            f"{entry['Contig_ID']}\t{entry['Gene_ID']}\t{entry['Gene_Coverage']}\n"
+            f"{entry['Contig_ID']}\t{entry['Gene_ID']}\t{entry['Gene_Coverage']}\t{entry['Annotation']}\n"
         )
 
 

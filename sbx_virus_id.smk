@@ -374,7 +374,7 @@ rule virus_blastx:
             blastx \
             -query {input} \
             -db $(basename {params.blast_db}) \
-            -outfmt 6 \
+            -outfmt "7 qacc sacc pident length mismatch gapopen qstart qend sstart send evalue bitscore stitle" \
             -num_threads {threads} \
             -evalue 0.05 \
             -max_target_seqs 100 \
