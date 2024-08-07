@@ -43,7 +43,10 @@ def virus_sorter_output() -> Path:
 
 rule all_virus_id:
     input:
-        expand(VIRUS_FP / "blastx" / "{sample}.btf", sample=Samples.keys()),
+        expand(
+            VIRUS_FP / "alignments" / "{sample}.gene_coverage.tsv",
+            sample=Samples.keys(),
+        ),
         VIRUS_FP / "summary" / "all_align_summary.txt",
 
 
@@ -94,17 +97,17 @@ rule install_cenote_taker:
         conda env config vars set CENOTE_DBS={params.db_fp}
 
         if [ -d {params.db_fp} ] && [ "$(ls -A {params.db_fp})" ]; then
-            echo "Cenote-Taker database already installed"
+            echo "Cenote-Taker database already installed" >> {log}
             touch {output}
             exit 0
         fi
 
         if [[ {params.extra_dbs} == "True" ]]; then
-            echo "Installing Cenote-Taker database with hhsuite"
-            get_ct3_dbs -o {params.db_fp} --hmm T --mmseqs_tax T --mmseqs_cdd T --domain_list T --hhCDD T --hhPFAM T --hhPDB T
+            echo "Installing Cenote-Taker database with hhsuite" >> {log}
+            get_ct3_dbs -o {params.db_fp} --hmm T --hallmark_tax T --refseq_tax  T --mmseqs_cdd T --domain_list T --hhCDD T --hhPFAM T --hhPDB T >> {log} 2>&1
         else
-            echo "Installing Cenote-Taker database without hhsuite"
-            get_ct3_dbs -o {params.db_fp} --hmm T --mmseqs_tax T --mmseqs_cdd T --domain_list T
+            echo "Installing Cenote-Taker database without hhsuite" >> {log}
+            get_ct3_dbs -o {params.db_fp} --hmm T --hallmark_tax T --refseq_tax  T --mmseqs_cdd T --domain_list T >> {log} 2>&1
         fi
 
         touch {output}
@@ -142,21 +145,21 @@ rule cenote_taker:
         """
         SAMPLE={params.sample}
         if [[ ${{#SAMPLE}} -lt 18 ]] && [[ {params.sample} =~ ^[a-zA-Z0-9_]+$ ]]; then
-            echo "Sample name format is valid"
+            echo "Sample name format is valid" >> {log}
         else
-            echo "Cenote-Taker requires a sample name that is less than 18 characters and contains only alphanumeric characters and underscores"
+            echo "Cenote-Taker requires a sample name that is less than 18 characters and contains only alphanumeric characters and underscores" >> {log}
             exit 1
         fi
 
         if [ -s {input.contigs} ]; then
-            echo "Contigs file exists and is not empty"
+            echo "Contigs file exists and is not empty" >> {log}
         else
-            echo "Contigs file is empty"
+            echo "Contigs file is empty" >> {log}
             exit 1
         fi
 
         cd {params.out_dir}
-        cenotetaker3 --contigs {input.contigs} -r {params.sample} -p T
+        cenotetaker3 --contigs {input.contigs} -r {params.sample} -p T >> {log} 2>&1
         """
 
 
@@ -304,8 +307,6 @@ rule calculate_mapping_stats:
         idx=VIRUS_FP / "alignments" / "{sample}.sorted.bam.bai",
     output:
         VIRUS_FP / "alignments" / "{sample}.sorted.idxstats.tsv",
-    params:
-        ext_fp=str(get_virus_ext_path()),
     conda:
         "envs/sbx_virus_id.yml"
     container:
@@ -313,6 +314,24 @@ rule calculate_mapping_stats:
     shell:
         """
         samtools idxstats {input.bam} > {output}
+        """
+
+
+rule virus_mpileup:
+    input:
+        bam=VIRUS_FP / "alignments" / "{sample}.sorted.bam",
+        idx=VIRUS_FP / "alignments" / "{sample}.sorted.bam.bai",
+    output:
+        VIRUS_FP / "alignments" / "{sample}.mpileup",
+    params:
+        contigs=virus_sorter_output(),
+    conda:
+        "envs/sbx_virus_id.yml"
+    container:
+        f"docker://sunbeamlabs/sbx_virus_id:{SBX_VIRUS_ID_VERSION}-sbx-virus-id"
+    shell:
+        """
+        samtools mpileup -f {params.contigs} {input.bam} > {output}
         """
 
 
@@ -355,7 +374,7 @@ rule virus_blastx:
             blastx \
             -query {input} \
             -db $(basename {params.blast_db}) \
-            -outfmt 6 \
+            -outfmt "7 qacc sacc pident length mismatch gapopen qstart qend sstart send evalue bitscore stitle" \
             -num_threads {threads} \
             -evalue 0.05 \
             -max_target_seqs 100 \
@@ -406,6 +425,22 @@ rule combine_coverage_stats:
         """
         Rscript {params.ext_fp}/scripts/combine_coverage_stats.R {input.cov} {input.stats} {output} 2>&1 | tee {log}
         """
+
+
+rule virus_coverage_per_gene:
+    input:
+        mpileup=VIRUS_FP / "alignments" / "{sample}.mpileup",
+        btf=VIRUS_FP / "blastx" / "{sample}.btf",
+    output:
+        tsv=VIRUS_FP / "alignments" / "{sample}.gene_coverage.tsv",
+    params:
+        contigs=virus_sorter_output(),
+    conda:
+        "envs/sbx_virus_id.yml"
+    container:
+        f"docker://sunbeamlabs/sbx_virus_id:{SBX_VIRUS_ID_VERSION}-sbx-virus-id"
+    script:
+        "scripts/virus_coverage_per_gene.py"
 
 
 rule all_summary:
