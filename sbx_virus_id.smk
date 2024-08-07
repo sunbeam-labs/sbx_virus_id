@@ -97,17 +97,17 @@ rule install_cenote_taker:
         conda env config vars set CENOTE_DBS={params.db_fp}
 
         if [ -d {params.db_fp} ] && [ "$(ls -A {params.db_fp})" ]; then
-            echo "Cenote-Taker database already installed"
+            echo "Cenote-Taker database already installed" >> {log}
             touch {output}
             exit 0
         fi
 
         if [[ {params.extra_dbs} == "True" ]]; then
-            echo "Installing Cenote-Taker database with hhsuite"
-            get_ct3_dbs -o {params.db_fp} --hmm T --mmseqs_tax T --mmseqs_cdd T --domain_list T --hhCDD T --hhPFAM T --hhPDB T
+            echo "Installing Cenote-Taker database with hhsuite" >> {log}
+            get_ct3_dbs -o {params.db_fp} --hmm T --hallmark_tax T --refseq_tax  T --mmseqs_cdd T --domain_list T --hhCDD T --hhPFAM T --hhPDB T >> {log} 2>&1
         else
-            echo "Installing Cenote-Taker database without hhsuite"
-            get_ct3_dbs -o {params.db_fp} --hmm T --mmseqs_tax T --mmseqs_cdd T --domain_list T
+            echo "Installing Cenote-Taker database without hhsuite" >> {log}
+            get_ct3_dbs -o {params.db_fp} --hmm T --hallmark_tax T --refseq_tax  T --mmseqs_cdd T --domain_list T >> {log} 2>&1
         fi
 
         touch {output}
@@ -145,21 +145,21 @@ rule cenote_taker:
         """
         SAMPLE={params.sample}
         if [[ ${{#SAMPLE}} -lt 18 ]] && [[ {params.sample} =~ ^[a-zA-Z0-9_]+$ ]]; then
-            echo "Sample name format is valid"
+            echo "Sample name format is valid" >> {log}
         else
-            echo "Cenote-Taker requires a sample name that is less than 18 characters and contains only alphanumeric characters and underscores"
+            echo "Cenote-Taker requires a sample name that is less than 18 characters and contains only alphanumeric characters and underscores" >> {log}
             exit 1
         fi
 
         if [ -s {input.contigs} ]; then
-            echo "Contigs file exists and is not empty"
+            echo "Contigs file exists and is not empty" >> {log}
         else
-            echo "Contigs file is empty"
+            echo "Contigs file is empty" >> {log}
             exit 1
         fi
 
         cd {params.out_dir}
-        cenotetaker3 --contigs {input.contigs} -r {params.sample} -p T
+        cenotetaker3 --contigs {input.contigs} -r {params.sample} -p T >> {log} 2>&1
         """
 
 
