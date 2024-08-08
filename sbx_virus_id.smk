@@ -47,6 +47,10 @@ rule all_virus_id:
             VIRUS_FP / "alignments" / "{sample}.gene_coverage.tsv",
             sample=Samples.keys(),
         ),
+        expand(
+            VIRUS_FP / "blastx" / "{sample}.btf",
+            sample=Samples.keys(),
+        ),
         VIRUS_FP / "summary" / "all_align_summary.txt",
 
 
