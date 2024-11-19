@@ -51,11 +51,11 @@ sunbeam run --profile /path/to/project/ all_virus_id
 
 ### Options for config.yml
 
-  - blast_db: path to blast db (default: "")
+  - blast_db: path to blast db (default: "") (NOTE: this should be the database file not just the directory it's in)
   - blastx_threads: number of threads for running blastx (default: 4)
   - bowtie2_build_threads: number of threads for running bowtie2-build (default: 4)
-  - cenote_taker2_db: path to cenote-taker2 db (default: "")
-  - virsorter_db: path to virsorter2 db (default: "")
+  - cenote_taker2_db: path to cenote-taker2 db (default: "") (NOTE: this should be a directory)
+  - virsorter_db: path to virsorter2 db (default: "") (NOTE: this should be a directory)
   - include_phages: Whether to include phages in the output (default: False)
   - use_spades: Whether to use SPAdes instead of MEGAHIT (default: False)
   - use_virsorter: Whether to use Virsorter2 instead of Cenote-Taker2 (default: False)
