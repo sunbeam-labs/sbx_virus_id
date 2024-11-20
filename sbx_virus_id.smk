@@ -325,17 +325,16 @@ rule virus_mpileup:
     input:
         bam=VIRUS_FP / "alignments" / "{sample}.sorted.bam",
         idx=VIRUS_FP / "alignments" / "{sample}.sorted.bam.bai",
+        contigs=virus_sorter_output(),
     output:
         VIRUS_FP / "alignments" / "{sample}.mpileup",
-    params:
-        contigs=virus_sorter_output(),
     conda:
         "envs/sbx_virus_id.yml"
     container:
         f"docker://sunbeamlabs/sbx_virus_id:{SBX_VIRUS_ID_VERSION}-sbx-virus-id"
     shell:
         """
-        samtools mpileup -f {params.contigs} {input.bam} > {output}
+        samtools mpileup -f {input.contigs} {input.bam} > {output}
         """
 
 
