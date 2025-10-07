@@ -1,17 +1,50 @@
 import csv
-from sunbeamlib.parse import parse_fasta, write_fasta
+import os
+from typing import Generator, TextIO
 
 
-with open(snakemake.input.summary) as f_summary, open(
-    snakemake.input.contigs
-) as f_contigs, open(snakemake.output[0], "w") as f_out:
+def parse_fasta(f: TextIO) -> Generator[tuple[str, str], None, None]:
+    header_str = ""
+    seq_str = ""
+    for line in f.readlines():
+        line = line.strip()
+        if line.startswith(">"):
+            if header_str:
+                yield header_str, seq_str
+            header_str = line
+            seq_str = ""
+        else:
+            seq_str += line
+    if header_str:
+        yield header_str, seq_str
+
+
+def write_fasta(record: list[str], f: TextIO) -> None:
+    f.write(f"{record[0]}\n")
+    f.write(f"{record[1]}\n")
+
+
+summary = snakemake.input.summary  # type: ignore
+contigs = snakemake.input.contigs  # type: ignore
+output_fp = snakemake.output[0]  # type: ignore
+include_phages = snakemake.params["include_phages"]  # type: ignore
+
+# Empty output if empty contigs
+if os.path.getsize(contigs) == 0:
+    with open(output_fp, "w") as f_out:
+        pass
+    exit(0)
+
+with open(summary) as f_summary, open(contigs) as f_contigs, open(
+    output_fp, "w"
+) as f_out:
     dr = csv.DictReader(f_summary, delimiter="\t")
     cd = {}
     phages = ["phage", "siphoviridae", "conjugative transposon"]
     for line in dr:
         if (
             all([x not in line["ORGANISM_NAME"].lower() for x in phages])
-            or snakemake.params["include_phages"]
+            or include_phages
         ) and int(line["NUM_HALLMARKS"]) > 0:
             cd[line["ORIGINAL_NAME"]] = 1
 

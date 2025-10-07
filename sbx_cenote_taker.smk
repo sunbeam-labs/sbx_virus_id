@@ -9,6 +9,7 @@ VIRUS_FP = output_subdir(Cfg, "virus")
 def get_extension_path() -> Path:
     return Path(__file__).parent.resolve()
 
+
 def cenote_output() -> Path:
     return VIRUS_FP / "cenote_taker" / "{sample}.fasta"
 
@@ -30,8 +31,8 @@ rule cenote_taker:
     input:
         contigs=ASSEMBLY_FP / "megahit" / "{sample}_asm" / "final.contigs.fa",
     output:
-        VIRUS_FP / "cenote_taker" / "{sample}" / "final.contigs.fasta",
-        VIRUS_FP
+        contigs=VIRUS_FP / "cenote_taker" / "{sample}" / "final.contigs.fasta",
+        summary=VIRUS_FP
         / "cenote_taker"
         / "{sample}"
         / "{sample}"
@@ -65,7 +66,8 @@ rule cenote_taker:
             echo "Contigs file exists and is not empty" >> {log}
         else
             echo "Contigs file is empty" >> {log}
-            exit 1
+            touch {output.contigs} {output.summary}
+            exit 0
         fi
 
         if [ ! -d {params.db_fp} ] || [ ! "$(ls -A {params.db_fp})" ]; then
