@@ -92,7 +92,7 @@ rule cenote_taker:
     log:
         LOG_FP / "cenote_taker_{sample}.log",
     params:
-        run_script=str(get_extension_path() / "Cenote-Taker2" / "run_cenote-taker2.py"),
+        run_script=str(get_extension_path() / "Cenote-Taker3" / "run_cenote-taker3.py"),
         out_dir=str(VIRUS_FP / "cenote_taker"),
         sample="{sample}",
         db_fp=Cfg["sbx_cenote_taker"]["cenote_taker_db"],
