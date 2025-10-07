@@ -1,7 +1,7 @@
 FROM condaforge/mambaforge:latest
 
 # Setup
-WORKDIR /home/sbx_virus_id_env
+WORKDIR /home/sbx_cenote_taker_env
 
 COPY envs/spades_env.yml ./
 

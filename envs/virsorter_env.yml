@@ -1,6 +1,0 @@
-channels:
-  - conda-forge
-  - bioconda
-dependencies:
-  - virsorter =2
-name: virsorter
