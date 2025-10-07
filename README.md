@@ -9,13 +9,14 @@
 
 ## Introduction
 
-sbx_cenote_taker is a [sunbeam](https://github.com/sunbeam-labs/sunbeam) extension for identifying viruses in samples with [Cenote-Taker3](https://github.com/jedvachey/Cenote-Taker3). This pipeline uses [MEGAHIT](https://github.com/voutcn/megahit) or [SPAdes](https://github.com/ablab/spades) for assembly of contigs and then processes assemblies with Cenote-Taker3.
+sbx_cenote_taker is a [sunbeam](https://github.com/sunbeam-labs/sunbeam) extension for identifying viruses in samples with [Cenote-Taker3](https://github.com/jedvachey/Cenote-Taker3). This pipeline uses [MEGAHIT](https://github.com/voutcn/megahit) for assembly of contigs and then processes assemblies with Cenote-Taker3.
 
-N.B. If using Megahit for assembly, this extension requires also having sbx_assembly installed.
+N.B. This extension requires also having sbx_assembly installed.
 
 ### Installation
 
 ```
+sunbeam extend https://github.com/sunbeam-labs/sbx_assembly.git
 sunbeam extend https://github.com/sunbeam-labs/sbx_cenote_taker.git
 ```
 
@@ -45,12 +46,3 @@ sunbeam run --profile /path/to/project/ all_cenote_taker
   - bowtie2_build_threads: number of threads for running bowtie2-build (default: 4)
   - cenote_taker_db: path to cenote-taker3 db (default: "") (NOTE: this should be a directory)
   - include_phages: Whether to include phages in the output (default: False)
-  - use_spades: Whether to use SPAdes instead of MEGAHIT (default: False)
-
-## Legacy Installation
-
-```
-git clone https://github.com/sunbeam-labs/sbx_cenote_taker.git extensions/sbx_cenote_taker
-cd extensions/sbx_cenote_taker
-cat config.yml >> /path/to/sunbeam_config.yml
-```

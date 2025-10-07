@@ -1,38 +1,13 @@
-# -*- mode: Snakemake -*-
-#
-# Rules for running Cenote-Taker3 and other tools in the viral id pipeline
-
-VIRUS_FP = Cfg["all"]["output_fp"] / "virus"
-
-
 try:
-    BENCHMARK_FP
-except NameError:
-    BENCHMARK_FP = Cfg["all"]["output_fp"] / "benchmarks"
-try:
-    LOG_FP
-except NameError:
-    LOG_FP = Cfg["all"]["output_fp"] / "logs"
+    SBX_CENOTE_TAKER_VERSION = get_ext_version("sbx_cenote_taker")
+except (NameError, ValueError):
+    # For backwards compatibility with older versions of Sunbeam
+    SBX_CENOTE_TAKER_VERSION = "0.0.0"
+VIRUS_FP = output_subdir(Cfg, "virus")
 
 
 def get_extension_path() -> Path:
-    ext_path = Path(sunbeam_dir) / "extensions" / "sbx_cenote_taker"
-    if ext_path.exists():
-        return ext_path
-    raise Error(
-        "Filepath for sbx_cenote_taker not found, are you sure it's installed under extensions/sbx_cenote_taker?"
-    )
-
-
-SBX_CENOTE_TAKER_VERSION = open(get_extension_path() / "VERSION").read().strip()
-
-
-def cenote_input() -> Path:
-    if Cfg["sbx_cenote_taker"]["use_spades"]:
-        return ASSEMBLY_FP / "virus_id_spades" / "{sample}" / "scaffolds.fasta"
-    else:
-        return ASSEMBLY_FP / "megahit" / "{sample}_asm" / "final.contigs.fa"
-
+    return Path(__file__).parent.resolve()
 
 def cenote_output() -> Path:
     return VIRUS_FP / "cenote_taker" / "{sample}.fasta"
@@ -51,35 +26,9 @@ rule all_cenote_taker:
         VIRUS_FP / "summary" / "all_align_summary.txt",
 
 
-rule virus_id_spades_paired:
-    input:
-        r1=QC_FP / "decontam" / "{sample}_1.fastq.gz",
-        r2=QC_FP / "decontam" / "{sample}_2.fastq.gz",
-    output:
-        ASSEMBLY_FP / "virus_id_spades" / "{sample}" / "scaffolds.fasta",
-    benchmark:
-        BENCHMARK_FP / "virus_id_spades_paired_{sample}.tsv"
-    log:
-        LOG_FP / "virus_id_spades_paired_{sample}.log",
-    params:
-        out_fp=str(ASSEMBLY_FP / "virus_id_spades" / "{sample}"),
-    threads: 4
-    conda:
-        "envs/spades_env.yml"
-    container:
-        f"docker://sunbeamlabs/sbx_cenote_taker:{SBX_CENOTE_TAKER_VERSION}-spades"
-    resources:
-        mem_mb=20000,
-        runtime=720,
-    shell:
-        """
-        spades.py -1 {input.r1} -2 {input.r2} -t {threads} -o {params.out_fp} 2>&1 | tee {log}
-        """
-
-
 rule cenote_taker:
     input:
-        contigs=cenote_input(),
+        contigs=ASSEMBLY_FP / "megahit" / "{sample}_asm" / "final.contigs.fa",
     output:
         VIRUS_FP / "cenote_taker" / "{sample}" / "final.contigs.fasta",
         VIRUS_FP
@@ -92,7 +41,6 @@ rule cenote_taker:
     log:
         LOG_FP / "cenote_taker_{sample}.log",
     params:
-        run_script=str(get_extension_path() / "Cenote-Taker3" / "run_cenote-taker3.py"),
         out_dir=str(VIRUS_FP / "cenote_taker"),
         sample="{sample}",
         db_fp=Cfg["sbx_cenote_taker"]["cenote_taker_db"],

@@ -4,4 +4,3 @@ sbx_cenote_taker:
   bowtie2_build_threads: 4
   cenote_taker_db: ''
   include_phages: False
-  use_spades: False # Default: Megahit
