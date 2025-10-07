@@ -1,4 +1,4 @@
-name: sbx_virus_id
+name: sbx_cenote_taker
 channels:
   - conda-forge
   - bioconda
