@@ -1,5 +1,4 @@
 # -*- mode: Snakemake -*-
-# -*- mode: Snakemake -*-
 #
 # Rules for running Cenote-Taker3 and other tools in the viral id pipeline
 
